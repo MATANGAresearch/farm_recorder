@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: farmrecorder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: farmrecorder/backend:latest
+        env:
+        - name: QUARKUS_DATASOURCE_JDBC_URL
+          value: jdbc:postgresql://postgres-service:5432/farmrecorder
+        - name: QUARKUS_DATASOURCE_USERNAME
+          value: farmuser
+        - name: QUARKUS_DATASOURCE_PASSWORD
+          value: farmpass
+        - name: QUARKUS_S3_ENDPOINT_OVERRIDE
+          value: http://minio-service:9000
+        - name: FARMRECORDER_S3_PUBLIC_ENDPOINT
+          value: https://farmrecorder.matangaresearch.com
+        - name: QUARKUS_S3_AWS_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
+          value: minioadmin
+        - name: QUARKUS_S3_AWS_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
+          value: minioadmin
+        - name: QUARKUS_OIDC_AUTH_SERVER_URL
+          value: http://keycloak-service:8080/auth/realms/farm-recorder
+        - name: QUARKUS_OIDC_CLIENT_ID
+          value: farm-recorder-backend
+        - name: QUARKUS_OIDC_CREDENTIALS_SECRET
+          value: your-client-secret-here
+        - name: QUARKUS_OPENSEARCH_HOSTS
+          value: http://opensearch-service:9200
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          requests:
+            memory: "384Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: farmrecorder
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: backend

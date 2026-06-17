@@ -25,11 +25,13 @@ public class S3Service {
     @Inject
     public S3Service(
             @ConfigProperty(name = "quarkus.s3.endpoint-override") String endpoint,
+            @ConfigProperty(name = "farmrecorder.s3.public-endpoint", defaultValue = "") String publicEndpoint,
             @ConfigProperty(name = "quarkus.s3.aws.credentials.static-provider.access-key-id") String accessKey,
             @ConfigProperty(name = "quarkus.s3.aws.credentials.static-provider.secret-access-key") String secretKey) {
 
+        String finalEndpoint = (publicEndpoint == null || publicEndpoint.trim().isEmpty()) ? endpoint : publicEndpoint;
         this.presigner = S3Presigner.builder()
-                .endpointOverride(URI.create(endpoint))
+                .endpointOverride(URI.create(finalEndpoint))
                 .region(Region.US_EAST_1)
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
                 .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
