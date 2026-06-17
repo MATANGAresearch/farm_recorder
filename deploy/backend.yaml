@@ -13,10 +13,14 @@ spec:
       labels:
         app: backend
     spec:
+      imagePullSecrets:
+      - name: acr-pull-secret
       containers:
       - name: backend
-        image: farmrecorder/backend:latest
+        image: lumaacr.azurecr.io/farm-recorder-backend:latest
         env:
+        - name: QUARKUS_HTTP_PORT
+          value: "8080"
         - name: QUARKUS_DATASOURCE_JDBC_URL
           value: jdbc:postgresql://postgres-service:5432/farmrecorder
         - name: QUARKUS_DATASOURCE_USERNAME

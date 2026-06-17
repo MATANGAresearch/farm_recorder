@@ -31,6 +31,8 @@ spec:
       - name: postgres
         image: postgis/postgis:17-3.4
         env:
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
         - name: POSTGRES_USER
           value: farmuser
         - name: POSTGRES_PASSWORD

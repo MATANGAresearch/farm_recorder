@@ -13,9 +13,11 @@ spec:
       labels:
         app: frontend
     spec:
+      imagePullSecrets:
+      - name: acr-pull-secret
       containers:
       - name: frontend
-        image: farmrecorder/frontend:latest
+        image: lumaacr.azurecr.io/farm-recorder-web:latest
         ports:
         - containerPort: 80
           name: http

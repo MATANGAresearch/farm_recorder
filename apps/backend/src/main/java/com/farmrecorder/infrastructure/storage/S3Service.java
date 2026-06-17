@@ -20,6 +20,7 @@ import java.time.Duration;
 public class S3Service {
 
     private final S3Presigner presigner;
+    private final String publicEndpoint;
     private static final String BUCKET_NAME = "farm-media";
 
     @Inject
@@ -30,6 +31,7 @@ public class S3Service {
             @ConfigProperty(name = "quarkus.s3.aws.credentials.static-provider.secret-access-key") String secretKey) {
 
         String finalEndpoint = (publicEndpoint == null || publicEndpoint.trim().isEmpty()) ? endpoint : publicEndpoint;
+        this.publicEndpoint = finalEndpoint;
         this.presigner = S3Presigner.builder()
                 .endpointOverride(URI.create(finalEndpoint))
                 .region(Region.US_EAST_1)
@@ -59,7 +61,7 @@ public class S3Service {
     }
 
     public String getObjectUrl(String objectKey) {
-        // For MinIO with path-style access, construct the URL manually
-        return "http://localhost:9000/" + BUCKET_NAME + "/" + objectKey;
+        // For MinIO with path-style access, construct the URL dynamically
+        return publicEndpoint + "/" + BUCKET_NAME + "/" + objectKey;
     }
 }
