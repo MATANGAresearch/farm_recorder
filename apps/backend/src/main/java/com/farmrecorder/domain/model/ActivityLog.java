@@ -1,0 +1,41 @@
+package com.farmrecorder.domain.model;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+
+public record ActivityLog(
+    UUID id,
+    Instant timestamp,
+    String userId,
+    UUID locationId,
+    UUID productId,
+    UUID taskId,
+    ActivityType type,
+    String notes,
+    Double gpsLat,
+    Double gpsLng,
+    Instant startTime,
+    Instant endTime,
+    UUID batchId,
+    Integer quantity,
+    BigDecimal unitPrice,
+    BigDecimal totalPrice,
+    String customerName,
+    String customerPhone,
+    String customerEmail,
+    String chemicalLotNumber,
+    Instant chemicalExpirationDate,
+    String applicationRate,
+    BigDecimal totalQuantityApplied,
+    Double weatherWindSpeed,
+    String weatherWindDirection,
+    Double weatherTemperature,
+    String applicatorLicense,
+    Boolean isManualInput,
+    String manualInputComments,
+    String verificationStatus,
+    String verifiedBy,
+    Instant verifiedAt,
+    Instant reiEndTime
+) {}
