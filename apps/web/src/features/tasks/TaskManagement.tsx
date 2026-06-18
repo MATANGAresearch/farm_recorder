@@ -1,11 +1,24 @@
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import axios from 'axios';
 import {
   useGetApiV1TasksFarmFarmId,
   usePostApiV1Tasks
 } from '../../api/tasks/tasks';
 import { Task } from '../../api/schemas/task';
+
+interface Worker {
+  id?: string;
+  username: string;
+  fullName: string;
+  applicatorLicense?: string;
+}
+
+const fetchWorkers = async (): Promise<Worker[]> => {
+  const response = await axios.get('/api/v1/workers');
+  return response.data;
+};
 
 const DEFAULT_FARM_ID = '019ecc19-b6be-76d9-b997-5e89f6c0e35a';
 
@@ -19,6 +32,11 @@ export default function TaskManagement() {
   });
 
   const queryClient = useQueryClient();
+
+  const { data: workers = [] } = useQuery<Worker[]>({
+    queryKey: ['workers'],
+    queryFn: fetchWorkers,
+  });
 
   // Fetch tasks dynamically from live backend
   const { data: tasksResponse, isLoading } = useGetApiV1TasksFarmFarmId(DEFAULT_FARM_ID);
@@ -83,15 +101,20 @@ export default function TaskManagement() {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Assign To (Worker Username) *</label>
-                <input 
+                <label className="form-label">Assign To *</label>
+                <select 
                   required
-                  type="text" 
                   className="form-control"
-                  placeholder="e.g. worker_1"
                   value={newTask.assignedTo}
                   onChange={(e) => setNewTask({...newTask, assignedTo: e.target.value})}
-                />
+                >
+                  <option value="">-- Select Worker --</option>
+                  {workers.map(w => (
+                    <option key={w.username} value={w.username}>
+                      {w.fullName} ({w.username})
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="form-group">

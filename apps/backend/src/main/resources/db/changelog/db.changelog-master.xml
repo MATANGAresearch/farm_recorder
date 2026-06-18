@@ -257,4 +257,19 @@
         <addUniqueConstraint tableName="input_batches" columnNames="gtin,lot_number" constraintName="uq_gtin_lot"/>
     </changeSet>
 
+    <changeSet id="14" author="farmrecorder">
+        <createTable tableName="workers">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="varchar(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="full_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="applicator_license" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
