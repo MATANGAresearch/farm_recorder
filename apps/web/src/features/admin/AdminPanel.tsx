@@ -29,6 +29,23 @@ const deleteWorker = async (id: string): Promise<void> => {
   await axios.delete(`/api/v1/workers/${id}`);
 };
 
+const fetchFarmWorkers = async (farmId: string): Promise<string[]> => {
+  const response = await axios.get(`/api/v1/farms/${farmId}/workers`);
+  return response.data;
+};
+
+const assignWorkerToFarm = async ({ farmId, email }: { farmId: string, email: string }) => {
+  await axios.post(`/api/v1/farms/${farmId}/workers/${email}`);
+};
+
+const unassignWorkerFromFarm = async ({ farmId, email }: { farmId: string, email: string }) => {
+  await axios.delete(`/api/v1/farms/${farmId}/workers/${email}`);
+};
+
+const promoteWorkerToAdmin = async (email: string) => {
+  await axios.post(`/api/v1/workers/${email}/promote`);
+};
+
 const AdminPanel: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'farms' | 'locations' | 'products' | 'workers'>('farms');
@@ -103,6 +120,39 @@ const AdminPanel: React.FC = () => {
     mutationFn: deleteWorker,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workers'] });
+    },
+  });
+
+  // Farm worker state and mutations
+  const [selectedFarmId, setSelectedFarmId] = useState<string>('');
+
+  const { data: assignedWorkers = [], refetch: refetchAssignedWorkers } = useQuery<string[]>({
+    queryKey: ['farmWorkers', selectedFarmId],
+    queryFn: () => fetchFarmWorkers(selectedFarmId),
+    enabled: !!selectedFarmId,
+  });
+
+  const assignWorkerMutation = useMutation({
+    mutationFn: assignWorkerToFarm,
+    onSuccess: () => {
+      refetchAssignedWorkers();
+    },
+  });
+
+  const unassignWorkerMutation = useMutation({
+    mutationFn: unassignWorkerFromFarm,
+    onSuccess: () => {
+      refetchAssignedWorkers();
+    },
+  });
+
+  const promoteWorkerMutation = useMutation({
+    mutationFn: promoteWorkerToAdmin,
+    onSuccess: () => {
+      alert('Worker promoted to Admin successfully!');
+    },
+    onError: (err: any) => {
+      alert('Failed to promote worker: ' + (err.response?.data?.error || err.message));
     },
   });
 
@@ -275,6 +325,101 @@ const AdminPanel: React.FC = () => {
               )}
             </div>
           </div>
+
+          {farms.length > 0 && (
+            <div className="glass-card" style={{ gridColumn: 'span 2', marginTop: '30px' }}>
+              <h3>Manage Farm Worker Assignments</h3>
+              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '15px' }}>
+                <div className="form-group" style={{ margin: 0, flex: 1 }}>
+                  <label className="form-label">Select Farm</label>
+                  <select
+                    className="form-control"
+                    value={selectedFarmId}
+                    onChange={(e) => setSelectedFarmId(e.target.value)}
+                  >
+                    <option value="">-- Choose Farm --</option>
+                    {farms.map((f: any) => (
+                      <option key={f.id} value={f.id}>{f.name}</option>
+                    ))}
+                  </select>
+                </div>
+                {selectedFarmId && (
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', flex: 1 }}>
+                    <div className="form-group" style={{ margin: 0, flex: 1 }}>
+                      <label className="form-label">Assign Worker</label>
+                      <select
+                        className="form-control"
+                        id="worker-assign-select"
+                      >
+                        <option value="">-- Choose Worker --</option>
+                        {workers.map((w) => (
+                          <option key={w.username} value={w.username}>{w.fullName} ({w.username})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const select = document.getElementById('worker-assign-select') as HTMLSelectElement;
+                        const email = select?.value;
+                        if (email) {
+                          assignWorkerMutation.mutate({ farmId: selectedFarmId, email });
+                        }
+                      }}
+                      className="btn btn-primary"
+                      disabled={assignWorkerMutation.isPending}
+                    >
+                      Assign Worker
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {selectedFarmId && (
+                <div style={{ marginTop: '20px' }}>
+                  <h4>Assigned Workers ({assignedWorkers.length})</h4>
+                  <div className="table-wrapper" style={{ marginTop: '10px' }}>
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Worker Email</th>
+                          <th style={{ width: '100px', textAlign: 'right' }}>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {assignedWorkers.length === 0 ? (
+                          <tr>
+                            <td colSpan={2} style={{ textAlign: 'center', color: '#64748b' }}>
+                              No workers assigned to this farm yet.
+                            </td>
+                          </tr>
+                        ) : (
+                          assignedWorkers.map((email) => (
+                            <tr key={email}>
+                              <td>{email}</td>
+                              <td style={{ textAlign: 'right' }}>
+                                <button
+                                  onClick={() => {
+                                    if (window.confirm(`Unassign ${email}?`)) {
+                                      unassignWorkerMutation.mutate({ farmId: selectedFarmId, email });
+                                    }
+                                  }}
+                                  className="btn btn-danger"
+                                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                                  disabled={unassignWorkerMutation.isPending}
+                                >
+                                  Unassign
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -584,15 +729,15 @@ const AdminPanel: React.FC = () => {
           <div className="glass-card">
             <h3>Register Farm Worker</h3>
             <p style={{ fontSize: '13px', color: '#94a3b8', margin: '5px 0 20px 0', lineHeight: '1.4' }}>
-              Link a user account created in Keycloak to their worker profile and attach pesticide applicator licenses.
+              Link a user account created in Firebase to their worker profile and attach pesticide applicator licenses.
             </p>
             <form onSubmit={handleWorkerSubmit}>
               <div className="form-group">
-                <label className="form-label">Keycloak Username</label>
+                <label className="form-label">Firebase Email Address (Username)</label>
                 <input
-                  type="text"
+                  type="email"
                   className="form-control"
-                  placeholder="e.g. worker_john (must match Keycloak)"
+                  placeholder="e.g. worker@domain.com (must match Firebase)"
                   value={workerUsername}
                   onChange={(e) => setWorkerUsername(e.target.value)}
                   required
@@ -645,10 +790,10 @@ const AdminPanel: React.FC = () => {
                   <table className="data-table">
                     <thead>
                       <tr>
-                        <th>Username</th>
+                        <th>Email / Username</th>
                         <th>Full Name</th>
                         <th>Applicator License</th>
-                        <th style={{ width: '80px' }}>Action</th>
+                        <th style={{ width: '220px', textAlign: 'right' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -663,19 +808,33 @@ const AdminPanel: React.FC = () => {
                               <span style={{ color: '#64748b', fontSize: '13px' }}>None</span>
                             )}
                           </td>
-                          <td>
-                            <button
-                              onClick={() => {
-                                if (w.id && window.confirm(`Remove worker ${w.fullName}?`)) {
-                                  deleteWorkerMutation.mutate(w.id);
-                                }
-                              }}
-                              className="btn btn-danger"
-                              style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '6px' }}
-                              disabled={deleteWorkerMutation.isPending}
-                            >
-                              Remove
-                            </button>
+                          <td style={{ textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                              <button
+                                onClick={() => {
+                                  if (w.id && window.confirm(`Remove worker ${w.fullName}?`)) {
+                                    deleteWorkerMutation.mutate(w.id);
+                                  }
+                                }}
+                                className="btn btn-danger"
+                                style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '6px' }}
+                                disabled={deleteWorkerMutation.isPending}
+                              >
+                                Remove
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (window.confirm(`Promote worker ${w.fullName} (${w.username}) to SaaS Admin?`)) {
+                                    promoteWorkerMutation.mutate(w.username);
+                                  }
+                                }}
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '6px', backgroundColor: 'var(--accent)', color: 'white' }}
+                                disabled={promoteWorkerMutation.isPending}
+                              >
+                                Promote to Admin
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

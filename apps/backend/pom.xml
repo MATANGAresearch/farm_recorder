@@ -104,6 +104,13 @@
             <version>5.2.1</version>
         </dependency>
 
+        <!-- Firebase Admin SDK for user promotion and claims management -->
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.2.0</version>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>io.quarkus</groupId>

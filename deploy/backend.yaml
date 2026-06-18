@@ -35,12 +35,10 @@ spec:
           value: minioadmin
         - name: QUARKUS_S3_AWS_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
           value: minioadmin
-        - name: QUARKUS_OIDC_AUTH_SERVER_URL
-          value: http://keycloak-service:8080/auth/realms/farm-recorder
-        - name: QUARKUS_OIDC_CLIENT_ID
-          value: farm-recorder-backend
-        - name: QUARKUS_OIDC_CREDENTIALS_SECRET
-          value: your-client-secret-here
+        - name: FARMRECORDER_FIREBASE_PROJECT_ID
+          value: farm-recorder-saas
+        - name: FARMRECORDER_FIREBASE_CREDENTIALS_JSON
+          value: ""
         - name: QUARKUS_OPENSEARCH_HOSTS
           value: http://opensearch-service:9200
         ports:

@@ -32,13 +32,6 @@ spec:
             name: backend-service
             port:
               number: 8080
-      - path: /auth
-        pathType: Prefix
-        backend:
-          service:
-            name: keycloak-service
-            port:
-              number: 8080
       - path: /farm-media
         pathType: Prefix
         backend:

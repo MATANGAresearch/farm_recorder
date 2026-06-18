@@ -10,5 +10,6 @@ public interface FarmRepositoryPort {
     Optional<Farm> findById(UUID id);
     List<Farm> getByOwnerId(String ownerId);
     List<Farm> getAll();
+    List<Farm> getAssignedFarms(String email);
     void deleteById(UUID id);
 }

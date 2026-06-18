@@ -7,6 +7,7 @@ import 'core/services/sync_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/activity/record_activity_screen.dart';
 import 'features/tasks/my_tasks_screen.dart';
+import 'features/auth/login_screen.dart';
 
 // Top-level service instances for simple dependency injection
 late final ApiService apiService;
@@ -18,17 +19,12 @@ void main() async {
   await AppDatabase.init();
 
   final dio = Dio(BaseOptions(
-    baseUrl: 'http://10.0.2.2:8082/api/v1', // 10.0.2.2 for Android emulator
+    baseUrl: 'https://farmrecorder.matangaresearch.com/api/v1',
     connectTimeout: const Duration(seconds: 15),
     receiveTimeout: const Duration(seconds: 15),
   ));
 
   authService = AuthService();
-
-  // Auto-login for development environment to ensure a fresh token
-  debugPrint("Performing development auto-login...");
-  final loginResult = await authService.login('farmuser', 'farmpass');
-  debugPrint("Auto-login result: $loginResult");
 
   apiService = ApiService(dio: dio, authService: authService);
   syncService = SyncService(apiService: apiService);
@@ -45,20 +41,83 @@ class FarmRecorderApp extends StatefulWidget {
 
 class _FarmRecorderAppState extends State<FarmRecorderApp> {
   int _currentIndex = 0;
+  bool _isAuthenticated = false;
+  bool _checkingAuth = true;
 
-  late final List<Widget> _screens;
+  late List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    final token = await authService.getToken();
+    setState(() {
+      _isAuthenticated = token != null;
+      _checkingAuth = false;
+      if (_isAuthenticated) {
+        _initScreens();
+      }
+    });
+  }
+
+  void _initScreens() {
     _screens = [
-      MyTasksScreen(apiService: apiService, syncService: syncService),
+      MyTasksScreen(
+        apiService: apiService, 
+        syncService: syncService,
+        onLogout: _handleLogout,
+      ),
       RecordActivityScreen(apiService: apiService, syncService: syncService),
     ];
   }
 
+  void _handleLoginSuccess() {
+    setState(() {
+      _isAuthenticated = true;
+      _initScreens();
+    });
+  }
+
+  void _handleLogout() async {
+    await authService.logout();
+    setState(() {
+      _isAuthenticated = false;
+      _currentIndex = 0;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_checkingAuth) {
+      return MaterialApp(
+        title: 'Farm Recorder',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        home: const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(color: Colors.green),
+          ),
+        ),
+      );
+    }
+
+    if (!_isAuthenticated) {
+      return MaterialApp(
+        title: 'Farm Recorder',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        home: LoginScreen(
+          authService: authService,
+          onLoginSuccess: _handleLoginSuccess,
+        ),
+      );
+    }
+
     return MaterialApp(
       title: 'Farm Recorder',
       debugShowCheckedModeBanner: false,

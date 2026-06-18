@@ -79,4 +79,36 @@ public class WorkerResource {
             return Response.noContent().build();
         });
     }
+
+    @POST
+    @Path("/{email}/promote")
+    @RolesAllowed("ADMIN")
+    @Operation(summary = "Promote a worker to Admin", description = "Sets custom claims on Firebase Auth to grant the ADMIN role. Restricted to admin role.")
+    @APIResponse(responseCode = "200", description = "User promoted to admin successfully")
+    @APIResponse(responseCode = "400", description = "Firebase SDK not initialized or user not found")
+    public Uni<Response> promote(@PathParam("email") String email) {
+        return Uni.createFrom().item(() -> {
+            if (com.google.firebase.FirebaseApp.getApps().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(java.util.Map.of("error", "Firebase Admin SDK is not initialized"))
+                        .build();
+            }
+
+            try {
+                com.google.firebase.auth.UserRecord userRecord = com.google.firebase.auth.FirebaseAuth.getInstance()
+                        .getUserByEmail(email);
+                
+                java.util.Map<String, Object> claims = new java.util.HashMap<>(userRecord.getCustomClaims());
+                claims.put("role", "ADMIN");
+                
+                com.google.firebase.auth.FirebaseAuth.getInstance().setCustomUserClaims(userRecord.getUid(), claims);
+                System.out.println("✅ Promoted user " + email + " to ADMIN role on Firebase.");
+                return Response.ok(java.util.Map.of("message", "User promoted to admin successfully")).build();
+            } catch (com.google.firebase.auth.FirebaseAuthException e) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(java.util.Map.of("error", "Firebase error: " + e.getMessage()))
+                        .build();
+            }
+        });
+    }
 }

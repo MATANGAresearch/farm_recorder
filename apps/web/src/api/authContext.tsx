@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import { postApiAuthLogin } from './authentication/authentication';
 
 interface User {
   username: string;
@@ -30,12 +29,8 @@ const parseJwt = (token: string): User | null => {
     );
     const decoded = JSON.parse(jsonPayload);
     
-    // Keycloak preferred_username is the user identifier
-    const username = decoded.preferred_username || decoded.sub || 'user';
-    
-    // Extract roles from realm_access
-    const roles = decoded.realm_access?.roles || [];
-    const role = roles.includes('ADMIN') ? 'ADMIN' : 'FARM_WORKER';
+    const username = decoded.email || decoded.user_id || 'user';
+    const role = decoded.role === 'ADMIN' ? 'ADMIN' : 'FARM_WORKER';
     
     return { username, role };
   } catch (error) {
@@ -49,11 +44,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const FIREBASE_API_KEY = (import.meta as any).env?.VITE_FIREBASE_API_KEY || 'AIzaSyPlaceholderKey12345';
+
   useEffect(() => {
     if (token) {
       const parsedUser = parseJwt(token);
       if (parsedUser) {
         setUser(parsedUser);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       } else {
         logout();
       }
@@ -61,20 +59,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, [token]);
 
-  const login = async (username: string, password: string) => {
+  const login = async (email: string, password: string) => {
     try {
-      const response = await postApiAuthLogin({ username, password });
-      const data = response.data as { access_token?: string };
-      
-      if (data && data.access_token) {
-        const accessToken = data.access_token;
-        const parsedUser = parseJwt(accessToken);
+      const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`;
+      const response = await axios.post(url, {
+        email,
+        password,
+        returnSecureToken: true
+      });
+
+      const data = response.data;
+      if (data && data.idToken) {
+        const idToken = data.idToken;
+        const parsedUser = parseJwt(idToken);
         if (parsedUser) {
-          localStorage.setItem('token', accessToken);
-          setToken(accessToken);
+          localStorage.setItem('token', idToken);
+          setToken(idToken);
           setUser(parsedUser);
-          // Set authorization header globally immediately
-          axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+          axios.defaults.headers.common['Authorization'] = `Bearer ${idToken}`;
         } else {
           throw new Error('Invalid authentication token');
         }

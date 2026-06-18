@@ -272,4 +272,16 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="15" author="farmrecorder">
+        <createTable tableName="farm_workers">
+            <column name="farm_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_farm_workers_farm" referencedTableName="farms" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+            <column name="worker_email" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="farm_workers" columnNames="farm_id,worker_email" constraintName="pk_farm_workers"/>
+    </changeSet>
+
 </databaseChangeLog>

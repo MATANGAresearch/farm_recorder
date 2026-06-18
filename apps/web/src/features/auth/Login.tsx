@@ -3,7 +3,7 @@ import { useAuth } from '../../api/authContext';
 
 const Login: React.FC = () => {
   const { login } = useAuth();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -14,10 +14,10 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(username, password);
+      await login(email, password);
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.error || 'Invalid credentials or connection issue.');
+      setError(err.response?.data?.error?.message || 'Invalid credentials or connection issue.');
     } finally {
       setLoading(false);
     }
@@ -36,16 +36,16 @@ const Login: React.FC = () => {
           {error && <div className="login-error">{error}</div>}
 
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="email">Email Address</label>
             <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
               required
               disabled={loading}
-              autoComplete="username"
+              autoComplete="email"
             />
           </div>
 
@@ -69,7 +69,7 @@ const Login: React.FC = () => {
         </form>
 
         <div className="login-footer">
-          <p>User registration is managed via the Keycloak Administration Console.</p>
+          <p>User registration is managed via Firebase Console or Administrator invitations.</p>
         </div>
       </div>
     </div>

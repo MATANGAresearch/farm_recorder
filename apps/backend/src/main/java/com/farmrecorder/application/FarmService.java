@@ -30,6 +30,10 @@ public class FarmService {
         return repository.getByOwnerId(ownerId);
     }
 
+    public List<Farm> getAssignedFarms(String email) {
+        return repository.getAssignedFarms(email);
+    }
+
     public List<Farm> getAll() {
         return repository.getAll();
     }

@@ -72,4 +72,46 @@ class ApiService {
     final response = await _dio.get('/input-batches');
     return List<Map<String, dynamic>>.from(response.data);
   }
+
+  Future<List<Map<String, dynamic>>> getFarms() async {
+    final response = await _dio.get('/farms');
+    return List<Map<String, dynamic>>.from(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> getWorkers() async {
+    final response = await _dio.get('/workers');
+    return List<Map<String, dynamic>>.from(response.data);
+  }
+
+  Future<Map<String, dynamic>> registerWorker(Map<String, dynamic> worker) async {
+    final response = await _dio.post('/workers', data: worker);
+    return response.data;
+  }
+
+  Future<void> promoteWorker(String email) async {
+    await _dio.post('/workers/$email/promote');
+  }
+
+  Future<List<String>> getFarmWorkers(String farmId) async {
+    final response = await _dio.get('/farms/$farmId/workers');
+    return List<String>.from(response.data);
+  }
+
+  Future<void> assignWorkerToFarm(String farmId, String email) async {
+    await _dio.post('/farms/$farmId/workers/$email');
+  }
+
+  Future<void> unassignWorkerFromFarm(String farmId, String email) async {
+    await _dio.delete('/farms/$farmId/workers/$email');
+  }
+
+  Future<Map<String, dynamic>> createTask(Map<String, dynamic> taskPayload) async {
+    final response = await _dio.post('/tasks', data: taskPayload);
+    return response.data;
+  }
+
+  Future<List<Map<String, dynamic>>> getTasksByFarm(String farmId) async {
+    final response = await _dio.get('/tasks/farm/$farmId');
+    return List<Map<String, dynamic>>.from(response.data);
+  }
 }

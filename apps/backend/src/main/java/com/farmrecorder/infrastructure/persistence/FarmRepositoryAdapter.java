@@ -50,6 +50,12 @@ public class FarmRepositoryAdapter implements FarmRepositoryPort, PanacheReposit
     }
 
     @Override
+    public List<Farm> getAssignedFarms(String email) {
+        return find("id in (select fw.farmId from FarmWorkerEntity fw where fw.workerEmail = ?1)", email)
+                .list().stream().map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public void deleteById(UUID id) {
         delete("id", id);
