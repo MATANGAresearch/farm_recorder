@@ -68,7 +68,29 @@ quarkus.oidc.credentials.secret=your-client-secret-here
 quarkus.oidc.application-type=service
 ```
 
-## 5. Troubleshooting Auth Issues
+## 5. Live AKS & Keycloak Provisioning
+
+In the AKS production environment (`https://farmrecorder.matangaresearch.com`), Keycloak has been provisioned with the realm `farm-recorder` and client `farm-recorder-backend` containing secret `your-client-secret-here`.
+
+The system comes pre-configured with two user accounts for testing:
+- **Administrator**:
+  - **Username**: `admin`
+  - **Password**: `admin`
+  - **Role**: `ADMIN` (granted access to `/admin` panel, Farms, Locations, Products, and Workers CRUD)
+- **Farm Worker**:
+  - **Username**: `worker_john`
+  - **Password**: `workerpass`
+  - **Role**: `FARM_WORKER` (granted access to Map, Tasks, Audit log, and status updates)
+
+## 6. Worker Profile Registration (Binding)
+
+Users created inside Keycloak represent credentials. To attach rich attributes like their legal full name and pesticide applicator license numbers:
+1. Log in to the Admin Panel as `admin`.
+2. Navigate to the **Workers** tab.
+3. Register the worker by specifying their Keycloak username, their full name, and their applicator license number.
+4. Once registered, their full name will automatically populate in the task assignment dropdowns and EPCIS activity log headers.
+
+## 7. Troubleshooting Auth Issues
 
 - **`401 Unauthorized`**: The token is missing, expired, or the signature is invalid. Check Keycloak logs and ensure the client system clock is synchronized.
 - **`403 Forbidden`**: The token is valid, but the user lacks the required role (e.g., `FARM_WORKER`). Verify the role mapping in Keycloak and inspect the decoded JWT at [jwt.io](https://jwt.io) to confirm the role is present in the payload.
