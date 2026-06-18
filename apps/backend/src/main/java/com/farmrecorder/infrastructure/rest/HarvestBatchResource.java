@@ -2,7 +2,7 @@ package com.farmrecorder.infrastructure.rest;
 
 import com.farmrecorder.application.HarvestBatchService;
 import com.farmrecorder.domain.model.HarvestBatch;
-import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -20,7 +20,7 @@ import java.util.UUID;
 @Path("/api/v1/harvest-batches")
 @Produces(MediaType.APPLICATION_JSON)
 @RolesAllowed({"FARM_WORKER", "ADMIN"})
-@Blocking
+@RunOnVirtualThread
 @Tag(name = "Harvest Batches", description = "Manage and query harvest batches for traceability and sales")
 public class HarvestBatchResource {
 

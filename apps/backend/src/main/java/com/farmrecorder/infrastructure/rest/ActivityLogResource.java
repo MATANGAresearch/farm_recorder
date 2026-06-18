@@ -3,7 +3,7 @@ package com.farmrecorder.infrastructure.rest;
 import com.farmrecorder.application.ActivityLogService;
 import com.farmrecorder.domain.model.ActivityLog;
 import io.quarkus.security.Authenticated;
-import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -27,7 +27,7 @@ import java.util.UUID;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed({"FARM_WORKER", "ADMIN"})
-@Blocking
+@RunOnVirtualThread
 @Tag(name = "Activity Logs", description = "Record and retrieve farm activities for GAP certification")
 public class ActivityLogResource {
 

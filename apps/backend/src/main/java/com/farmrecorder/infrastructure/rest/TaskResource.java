@@ -4,7 +4,7 @@ import com.farmrecorder.application.TaskService;
 import com.farmrecorder.core.util.IdGenerator;
 import com.farmrecorder.domain.model.Task;
 import com.farmrecorder.domain.model.TaskStatus;
-import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -28,7 +28,7 @@ import java.util.UUID;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed({"FARM_WORKER", "ADMIN"})
-@Blocking
+@RunOnVirtualThread
 @Tag(name = "Tasks", description = "Manage farm tasks and assignments")
 public class TaskResource {
 

@@ -2,7 +2,7 @@ package com.farmrecorder.infrastructure.rest;
 
 import com.farmrecorder.domain.model.InputBatch;
 import com.farmrecorder.domain.port.InputBatchRepositoryPort;
-import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -21,7 +21,7 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed({"FARM_WORKER", "ADMIN"})
-@Blocking
+@RunOnVirtualThread
 @Tag(name = "Input Batches", description = "Manage chemical and fertilizer inventory lots")
 public class InputBatchResource {
 

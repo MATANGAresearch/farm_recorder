@@ -3,7 +3,7 @@ package com.farmrecorder.infrastructure.rest;
 import com.farmrecorder.application.ProductService;
 import com.farmrecorder.domain.model.Product;
 import io.quarkus.security.Authenticated;
-import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -24,7 +24,7 @@ import java.util.UUID;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed({"FARM_WORKER", "ADMIN"})
-@Blocking
+@RunOnVirtualThread
 @Tag(name = "Products", description = "Manage farm products with GS1 GTIN")
 public class ProductResource {
 

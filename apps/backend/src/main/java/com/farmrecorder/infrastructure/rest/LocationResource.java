@@ -3,7 +3,7 @@ package com.farmrecorder.infrastructure.rest;
 import com.farmrecorder.application.LocationService;
 import com.farmrecorder.domain.model.Location;
 import io.quarkus.security.Authenticated;
-import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -24,7 +24,7 @@ import java.util.UUID;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed({"FARM_WORKER", "ADMIN"})
-@Blocking
+@RunOnVirtualThread
 @Tag(name = "Locations", description = "Manage farm locations with GS1 GLN and GPS boundaries")
 public class LocationResource {
 
@@ -36,7 +36,6 @@ public class LocationResource {
     }
 
     @POST
-    @Blocking
     @Operation(summary = "Create a new farm location", description = "Registers a new field or facility with its GLN and GeoJSON boundary")
     @APIResponse(responseCode = "201", description = "Location created successfully",
         content = @Content(schema = @Schema(implementation = Location.class)))
@@ -57,7 +56,6 @@ public class LocationResource {
 
     @GET
     @Path("/{id}")
-    @Blocking
     @Operation(summary = "Get location by ID", description = "Retrieves a specific location by its UUID")
     @APIResponse(responseCode = "200", description = "Location found",
         content = @Content(schema = @Schema(implementation = Location.class)))

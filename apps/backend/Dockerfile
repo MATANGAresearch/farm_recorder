@@ -1,5 +1,5 @@
 # Stage 1: Build the application
-FROM maven:3.9.5-eclipse-temurin-17 AS build
+FROM maven:3.9.5-eclipse-temurin-21 AS build
 WORKDIR /workspace
 COPY pom.xml .
 RUN mvn dependency:go-offline
@@ -7,7 +7,7 @@ COPY src src
 RUN mvn clean package -DskipTests
 
 # Stage 2: Run the application
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:21-jre
 WORKDIR /deployments
 COPY --from=build /workspace/target/quarkus-app/lib/ /deployments/lib/
 COPY --from=build /workspace/target/quarkus-app/*.jar /deployments/

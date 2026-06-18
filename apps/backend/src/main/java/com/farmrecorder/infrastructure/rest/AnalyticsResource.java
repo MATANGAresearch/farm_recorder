@@ -1,6 +1,6 @@
 package com.farmrecorder.infrastructure.rest;
 
-import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -20,7 +20,7 @@ import java.util.Map;
 @Path("/api/v1/analytics")
 @Produces(MediaType.APPLICATION_JSON)
 @RolesAllowed({"FARM_WORKER", "ADMIN"})
-@Blocking
+@RunOnVirtualThread
 @Tag(name = "Analytics", description = "OpenSearch powered analytics and geo-spatial queries")
 public class AnalyticsResource {
 

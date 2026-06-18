@@ -4,7 +4,7 @@ import com.farmrecorder.application.FarmService;
 import com.farmrecorder.core.util.IdGenerator;
 import com.farmrecorder.domain.model.Farm;
 import com.farmrecorder.infrastructure.persistence.FarmWorkerEntity;
-import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed({"FARM_WORKER", "ADMIN"})
-@Blocking
+@RunOnVirtualThread
 @Tag(name = "Farms", description = "Manage farms and ownership")
 public class FarmResource {
 

@@ -3,7 +3,7 @@ package com.farmrecorder.infrastructure.rest;
 import com.farmrecorder.application.MediaService;
 import com.farmrecorder.domain.model.Media;
 import com.farmrecorder.infrastructure.storage.S3Service;
-import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -26,7 +26,7 @@ import java.util.UUID;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed({"FARM_WORKER", "ADMIN"})
-@Blocking
+@RunOnVirtualThread
 @Tag(name = "Media", description = "Manage photos and media attached to activity logs")
 public class MediaResource {
 

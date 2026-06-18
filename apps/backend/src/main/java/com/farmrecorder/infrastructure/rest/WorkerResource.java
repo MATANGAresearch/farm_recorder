@@ -2,7 +2,7 @@ package com.farmrecorder.infrastructure.rest;
 
 import com.farmrecorder.application.WorkerService;
 import com.farmrecorder.domain.model.Worker;
-import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -23,7 +23,7 @@ import java.util.UUID;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed({"FARM_WORKER", "ADMIN"})
-@Blocking
+@RunOnVirtualThread
 @Tag(name = "Workers", description = "Manage farm workers and applicator licenses")
 public class WorkerResource {
 
