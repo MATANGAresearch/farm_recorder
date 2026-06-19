@@ -1,0 +1,28 @@
+version: 2
+updates:
+  # Maintain GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Maintain Maven dependencies in apps/backend
+  - package-ecosystem: "maven"
+    directory: "/apps/backend"
+    schedule:
+      interval: "daily"
+    open-commit-limit: 10
+
+  # Maintain npm dependencies in the root workspace
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-commit-limit: 10
+
+  # Maintain npm dependencies in apps/web
+  - package-ecosystem: "npm"
+    directory: "/apps/web"
+    schedule:
+      interval: "daily"
+    open-commit-limit: 10
