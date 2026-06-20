@@ -76,8 +76,14 @@ public class AnalyticsResource {
                     .map(hit -> hit.source())
                     .toList();
 
+            long total = 0;
+            final var totalHits = response.hits().total();
+            if (totalHits != null) {
+                total = totalHits.value();
+            }
+
             return Response.ok(Map.of(
-                    "total", response.hits().total().value(),
+                    "total", total,
                     "results", results
             )).build();
         } catch (Exception e) {
