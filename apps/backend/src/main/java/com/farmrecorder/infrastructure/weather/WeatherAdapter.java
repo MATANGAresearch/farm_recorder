@@ -4,6 +4,7 @@ import com.farmrecorder.domain.model.WeatherDetails;
 import com.farmrecorder.domain.port.WeatherGatewayPort;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.logging.Logger;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -13,6 +14,8 @@ import java.util.List;
 
 @ApplicationScoped
 public class WeatherAdapter implements WeatherGatewayPort {
+
+    private static final Logger LOG = Logger.getLogger(WeatherAdapter.class);
 
     @RestClient
     OpenMeteoClient openMeteoClient;
@@ -52,7 +55,7 @@ public class WeatherAdapter implements WeatherGatewayPort {
                 return new WeatherDetails(windSpeed, windDir, temp);
             }
         } catch (Exception e) {
-            System.err.println("Failed to fetch historical weather: " + e.getMessage());
+            LOG.error("Failed to fetch historical weather: " + e.getMessage(), e);
         }
         return null;
     }

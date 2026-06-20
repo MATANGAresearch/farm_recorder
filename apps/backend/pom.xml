@@ -10,15 +10,16 @@
 
     <properties>
         <compiler-plugin.version>3.11.0</compiler-plugin.version>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.15.1</quarkus.platform.version>
-        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <quarkus.platform.version>3.36.3</quarkus.platform.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.1.2</surefire-plugin.version>
+        <m2e.apt.activation>jdt_apt</m2e.apt.activation>
     </properties>
 
     <dependencyManagement>
@@ -84,20 +85,21 @@
         <dependency>
             <groupId>com.github.f4b6a3</groupId>
             <artifactId>uuid-creator</artifactId>
-            <version>5.3.4</version>
+            <version>6.1.1</version>
         </dependency>
 
         <!-- OpenSearch Java Client -->
         <dependency>
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-java</artifactId>
-            <version>2.8.1</version>
+            <version>3.9.0</version>
         </dependency>
         <dependency>
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-rest-client</artifactId>
-            <version>2.7.0</version>
+            <version>3.7.0</version>
         </dependency>
+
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
@@ -108,18 +110,18 @@
         <dependency>
             <groupId>com.google.firebase</groupId>
             <artifactId>firebase-admin</artifactId>
-            <version>9.2.0</version>
+            <version>9.9.0</version>
         </dependency>
 
         <!-- Testing -->
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
+            <artifactId>quarkus-junit</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5-mockito</artifactId>
+            <artifactId>quarkus-junit-mockito</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -130,6 +132,18 @@
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Input Validation -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
+        </dependency>
+        <!-- Architecture boundary checks -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.4.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -151,12 +165,14 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${compiler-plugin.version}</version>
                 <configuration>
                     <compilerArgs>
                         <arg>-parameters</arg>
+                        <arg>-Amapstruct.defaultComponentModel=jakarta-cdi</arg>
                     </compilerArgs>
                     <annotationProcessorPaths>
                         <path>
@@ -168,6 +184,25 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>add-generated-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/annotations</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire-plugin.version}</version>
                 <configuration>
@@ -175,9 +210,37 @@
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>
-                    <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+                    <argLine>@{argLine} -Dnet.bytebuddy.experimental=true</argLine>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.6.0</version>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <consoleOutput>true</consoleOutput>
+                    <failsOnError>true</failsOnError>
+                    <linkXRef>false</linkXRef>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>cli</id>
+            <build>
+                <directory>target-cli</directory>
+            </build>
+        </profile>
+    </profiles>
 </project>

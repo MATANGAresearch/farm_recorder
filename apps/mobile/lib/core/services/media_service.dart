@@ -9,6 +9,7 @@ enum MediaType { IMAGE, VIDEO, AUDIO }
 
 class MediaService {
   final ImagePicker _picker = ImagePicker();
+  bool useMock = true;
 
   Future<Position?> getCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -23,12 +24,13 @@ class MediaService {
     if (permission == LocationPermission.deniedForever) return null;
 
     return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      ),
     );
   }
 
   Future<File?> captureMedia(MediaType type) async {
-    const bool useMock = true; // Set to true to bypass native picker on emulator
     if (useMock) {
       final tempDir = Directory.systemTemp;
       if (type == MediaType.IMAGE) {
@@ -85,9 +87,13 @@ class MediaService {
     try {
       final fileName = mediaFile.path.split('/').last;
       String contentType = 'application/octet-stream';
-      if (type == MediaType.IMAGE) contentType = 'image/jpeg';
-      else if (type == MediaType.VIDEO) contentType = 'video/mp4';
-      else if (type == MediaType.AUDIO) contentType = 'audio/mp4';
+      if (type == MediaType.IMAGE) {
+        contentType = 'image/jpeg';
+      } else if (type == MediaType.VIDEO) {
+        contentType = 'video/mp4';
+      } else if (type == MediaType.AUDIO) {
+        contentType = 'audio/mp4';
+      }
 
       // 1. Request presigned URL from backend via ApiService (sends authorization token)
       print('DEBUG: Requesting presigned URL. farmId: $farmId, taskId: $taskId, fileName: $fileName, contentType: $contentType');

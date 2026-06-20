@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -102,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 'Farm Recorder',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: colorScheme.onBackground,
+                  color: colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -120,9 +120,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colorScheme.errorContainer.withOpacity(0.2),
+                    color: colorScheme.errorContainer.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: colorScheme.error.withOpacity(0.3)),
+                    border: Border.all(color: colorScheme.error.withValues(alpha: 0.3)),
                   ),
                   child: Text(
                     _error!,

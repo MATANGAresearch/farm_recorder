@@ -32,10 +32,10 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
   bool _isAdminMode = false;
   
   List<String> _farmWorkers = [];
-  List<Map<String, dynamic>> _allWorkers = [];
   
   bool _isLoading = true;
   String? _error;
+  final bool _useMock = true;
 
   final ImagePicker _picker = ImagePicker();
   final MediaService _mediaService = MediaService();
@@ -109,12 +109,10 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
       if (_userRole == 'ADMIN' && _isAdminMode) {
         final tasks = await widget.apiService.getTasksByFarm(farmId);
         final farmWorkerEmails = await widget.apiService.getFarmWorkers(farmId);
-        final workers = await widget.apiService.getWorkers();
 
         setState(() {
           _tasks = tasks;
           _farmWorkers = farmWorkerEmails;
-          _allWorkers = workers;
           _isLoading = false;
         });
       } else {
@@ -136,9 +134,8 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
 
   Future<void> _captureEvidence(String taskId, String type) async {
     File? mediaFile;
-    const bool useMock = true; // Set to true to bypass native picker on emulator
     try {
-      if (useMock) {
+      if (_useMock) {
         final tempDir = Directory.systemTemp;
         final extension = type == 'IMAGE' ? 'jpg' : 'mp4';
         final dummyFile = File('${tempDir.path}/mock_${type.toLowerCase()}_$taskId.$extension');
@@ -274,6 +271,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
       });
       _taskTitleController.clear();
       _taskDescriptionController.clear();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Task assigned successfully!')),
       );
@@ -282,6 +280,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
       });
       await _loadTasksAndDetails();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to assign task: $e')),
       );
@@ -296,11 +295,13 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
     try {
       await widget.apiService.assignWorkerToFarm(_selectedFarm!['id'], email);
       _workerEmailController.clear();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Worker assigned to farm.')),
       );
       await _loadTasksAndDetails();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to assign worker: $e')),
       );
@@ -312,11 +313,13 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
     setState(() => _isLoading = true);
     try {
       await widget.apiService.unassignWorkerFromFarm(_selectedFarm!['id'], email);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Worker unassigned from farm.')),
       );
       await _loadTasksAndDetails();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to unassign worker: $e')),
       );
@@ -331,11 +334,13 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
     try {
       await widget.apiService.promoteWorker(email);
       _promoteEmailController.clear();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Worker promoted to Admin successfully!')),
       );
       await _loadTasksAndDetails();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to promote worker: $e')),
       );
@@ -413,7 +418,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
           // User Card / Info header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: colorScheme.surfaceVariant.withOpacity(0.4),
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -432,7 +437,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: _userRole == 'ADMIN' ? Colors.green.withOpacity(0.2) : Colors.blue.withOpacity(0.2),
+                              color: _userRole == 'ADMIN' ? Colors.green.withValues(alpha: 0.2) : Colors.blue.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -456,7 +461,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: _isAdminMode ? Colors.purple.withOpacity(0.2) : Colors.grey.withOpacity(0.2),
+                                  color: _isAdminMode ? Colors.purple.withValues(alpha: 0.2) : Colors.grey.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -526,7 +531,6 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
 
   Widget _navButton(int index, String label, IconData icon) {
     final isSelected = _adminTabIndex == index;
-    final theme = Theme.of(context);
     return Expanded(
       child: InkWell(
         onTap: () => setState(() => _adminTabIndex = index),
@@ -585,7 +589,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.08),
+                    color: colorScheme.primary.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.check_circle_outline, size: 72, color: colorScheme.primary),
@@ -611,7 +615,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         itemCount: _tasks.length,
         separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemBuilder: (context, index) {
+        itemBuilder: (_, index) {
           final task = _tasks[index];
           final taskId = task['id'] as String;
           final isCompleted = task['status'] == 'COMPLETED' || task['status'] == 'REVIEWED';
@@ -665,9 +669,9 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.08),
+                          color: statusColor.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: statusColor.withOpacity(0.2), width: 1),
+                          border: Border.all(color: statusColor.withValues(alpha: 0.2), width: 1),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -708,11 +712,13 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
                               setState(() => _isLoading = true);
                               try {
                                 await widget.apiService.updateTaskStatus(taskId, 'REVIEWED');
+                                if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Task status updated to REVIEWED.')),
                                 );
                                 await _loadTasksAndDetails();
                               } catch (e) {
+                                if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Failed to update status: $e')),
                                 );
@@ -767,9 +773,9 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer.withOpacity(0.2),
+                            color: colorScheme.primaryContainer.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: colorScheme.primary.withOpacity(0.3)),
+                            border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             children: [
@@ -822,9 +828,9 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         decoration: BoxDecoration(
-                          color: colorScheme.primary.withOpacity(0.06),
+                          color: colorScheme.primary.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: colorScheme.primary.withOpacity(0.15)),
+                          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.15)),
                         ),
                         child: Row(
                           children: [
@@ -886,7 +892,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
               labelText: 'Assign To Worker *',
               border: OutlineInputBorder(),
             ),
-            value: _assignTargetWorkerEmail.isEmpty ? null : _assignTargetWorkerEmail,
+            initialValue: _assignTargetWorkerEmail.isEmpty ? null : _assignTargetWorkerEmail,
             onChanged: (email) {
               if (email != null) {
                 setState(() {
@@ -920,6 +926,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
                 lastDate: DateTime.now().add(const Duration(days: 365)),
               );
               if (date != null) {
+                if (!mounted) return;
                 final time = await showTimePicker(
                   context: context,
                   initialTime: TimeOfDay.fromDateTime(_selectedDueDate),

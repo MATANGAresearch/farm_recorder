@@ -3,10 +3,14 @@ package com.farmrecorder.infrastructure.rest;
 import com.farmrecorder.domain.model.InputBatch;
 import com.farmrecorder.domain.port.InputBatchRepositoryPort;
 import io.smallrye.common.annotation.RunOnVirtualThread;
-import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -37,19 +41,17 @@ public class InputBatchResource {
     @Operation(summary = "Register a new input batch (admin only)", description = "Adds a lot/batch of pesticide or fertilizer to the inventory")
     @APIResponse(responseCode = "201", description = "Input batch registered successfully",
         content = @Content(schema = @Schema(implementation = InputBatch.class)))
-    public Uni<Response> register(InputBatch batch) {
-        return Uni.createFrom().item(() -> {
-            InputBatch saved = inputBatchRepository.save(batch);
-            return Response.status(Response.Status.CREATED).entity(saved).build();
-        });
+    public Response register(InputBatch batch) {
+        InputBatch saved = inputBatchRepository.save(batch);
+        return Response.status(Response.Status.CREATED).entity(saved).build();
     }
 
     @GET
     @Operation(summary = "List all inventory batches", description = "Retrieves all registered chemical and fertilizer lots")
     @APIResponse(responseCode = "200", description = "List of input batches",
         content = @Content(schema = @Schema(implementation = InputBatch.class, type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.ARRAY)))
-    public Uni<List<InputBatch>> getAll() {
-        return Uni.createFrom().item(inputBatchRepository::getAll);
+    public List<InputBatch> getAll() {
+        return inputBatchRepository.getAll();
     }
 
     @GET
@@ -58,9 +60,9 @@ public class InputBatchResource {
     @APIResponse(responseCode = "200", description = "Input batch matching the barcode",
         content = @Content(schema = @Schema(implementation = InputBatch.class)))
     @APIResponse(responseCode = "404", description = "Inventory batch not found")
-    public Uni<Response> lookup(@QueryParam("gtin") String gtin, @QueryParam("lotNumber") String lotNumber) {
-        return Uni.createFrom().item(() -> inputBatchRepository.findByGtinAndLotNumber(gtin, lotNumber)
+    public Response lookup(@QueryParam("gtin") String gtin, @QueryParam("lotNumber") String lotNumber) {
+        return inputBatchRepository.findByGtinAndLotNumber(gtin, lotNumber)
             .map(batch -> Response.ok(batch).build())
-            .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build()));
+            .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
 }

@@ -2,12 +2,17 @@ package com.farmrecorder.infrastructure.rest;
 
 import com.farmrecorder.application.ActivityLogService;
 import com.farmrecorder.domain.model.ActivityLog;
-import io.quarkus.security.Authenticated;
 import io.smallrye.common.annotation.RunOnVirtualThread;
-import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -42,51 +47,49 @@ public class ActivityLogResource {
     @Operation(summary = "Create a new activity log", description = "Records a farm activity with GPS coordinates, optionally linked to a task or harvest batch, triggering EPCIS event")
     @APIResponse(responseCode = "201", description = "Activity log created successfully",
         content = @Content(schema = @Schema(implementation = ActivityLog.class)))
-    public Uni<Response> create(ActivityLog activityLog, @Context SecurityContext securityContext) {
-        return Uni.createFrom().item(() -> {
-            // Extract actual user ID (username) from JWT token (upn claim)
-            String userId = securityContext.getUserPrincipal().getName();
+    public Response create(@Valid ActivityLog activityLog, @Context SecurityContext securityContext) {
+        // Extract actual user ID (username) from JWT token (upn claim)
+        String userId = securityContext.getUserPrincipal().getName();
 
-            // Override the userId from the payload with the authenticated user's ID
-            ActivityLog secureLog = new ActivityLog(
-                activityLog.id(),
-                activityLog.timestamp(),
-                userId,
-                activityLog.locationId(),
-                activityLog.productId(),
-                activityLog.taskId(),
-                activityLog.type(),
-                activityLog.notes(),
-                activityLog.gpsLat(),
-                activityLog.gpsLng(),
-                activityLog.startTime(),
-                activityLog.endTime(),
-                activityLog.batchId(),
-                activityLog.quantity(),
-                activityLog.unitPrice(),
-                activityLog.totalPrice(),
-                activityLog.customerName(),
-                activityLog.customerPhone(),
-                activityLog.customerEmail(),
-                activityLog.chemicalLotNumber(),
-                activityLog.chemicalExpirationDate(),
-                activityLog.applicationRate(),
-                activityLog.totalQuantityApplied(),
-                activityLog.weatherWindSpeed(),
-                activityLog.weatherWindDirection(),
-                activityLog.weatherTemperature(),
-                activityLog.applicatorLicense(),
-                activityLog.isManualInput(),
-                activityLog.manualInputComments(),
-                activityLog.verificationStatus(),
-                activityLog.verifiedBy(),
-                activityLog.verifiedAt(),
-                activityLog.reiEndTime()
-            );
+        // Override the userId from the payload with the authenticated user's ID
+        ActivityLog secureLog = new ActivityLog(
+            activityLog.id(),
+            activityLog.timestamp(),
+            userId,
+            activityLog.locationId(),
+            activityLog.productId(),
+            activityLog.taskId(),
+            activityLog.type(),
+            activityLog.notes(),
+            activityLog.gpsLat(),
+            activityLog.gpsLng(),
+            activityLog.startTime(),
+            activityLog.endTime(),
+            activityLog.batchId(),
+            activityLog.quantity(),
+            activityLog.unitPrice(),
+            activityLog.totalPrice(),
+            activityLog.customerName(),
+            activityLog.customerPhone(),
+            activityLog.customerEmail(),
+            activityLog.chemicalLotNumber(),
+            activityLog.chemicalExpirationDate(),
+            activityLog.applicationRate(),
+            activityLog.totalQuantityApplied(),
+            activityLog.weatherWindSpeed(),
+            activityLog.weatherWindDirection(),
+            activityLog.weatherTemperature(),
+            activityLog.applicatorLicense(),
+            activityLog.isManualInput(),
+            activityLog.manualInputComments(),
+            activityLog.verificationStatus(),
+            activityLog.verifiedBy(),
+            activityLog.verifiedAt(),
+            activityLog.reiEndTime()
+        );
 
-            ActivityLog created = activityLogService.create(secureLog, securityContext.isUserInRole("ADMIN"));
-            return Response.status(Response.Status.CREATED).entity(created).build();
-        });
+        ActivityLog created = activityLogService.create(secureLog, securityContext.isUserInRole("ADMIN"));
+        return Response.status(Response.Status.CREATED).entity(created).build();
     }
 
     @PUT
@@ -94,61 +97,59 @@ public class ActivityLogResource {
     @APIResponse(responseCode = "200", description = "Activity log updated successfully",
         content = @Content(schema = @Schema(implementation = ActivityLog.class)))
     @RolesAllowed("ADMIN")
-    public Uni<Response> update(ActivityLog activityLog, @Context SecurityContext securityContext) {
-        return Uni.createFrom().item(() -> {
-            String adminUser = securityContext.getUserPrincipal().getName();
-            String vStatus = activityLog.verificationStatus();
-            String verifiedBy = activityLog.verifiedBy();
-            Instant verifiedAt = activityLog.verifiedAt();
+    public Response update(@Valid ActivityLog activityLog, @Context SecurityContext securityContext) {
+        String adminUser = securityContext.getUserPrincipal().getName();
+        String vStatus = activityLog.verificationStatus();
+        String verifiedBy = activityLog.verifiedBy();
+        Instant verifiedAt = activityLog.verifiedAt();
 
-            if (vStatus != null && ("VERIFIED".equalsIgnoreCase(vStatus) || "AUDITED".equalsIgnoreCase(vStatus))) {
-                if (verifiedBy == null || verifiedBy.trim().isEmpty()) {
-                    verifiedBy = adminUser;
-                }
-                if (verifiedAt == null) {
-                    verifiedAt = Instant.now();
-                }
+        if (vStatus != null && ("VERIFIED".equalsIgnoreCase(vStatus) || "AUDITED".equalsIgnoreCase(vStatus))) {
+            if (verifiedBy == null || verifiedBy.trim().isEmpty()) {
+                verifiedBy = adminUser;
             }
+            if (verifiedAt == null) {
+                verifiedAt = Instant.now();
+            }
+        }
 
-            ActivityLog secureLog = new ActivityLog(
-                activityLog.id(),
-                activityLog.timestamp(),
-                activityLog.userId(),
-                activityLog.locationId(),
-                activityLog.productId(),
-                activityLog.taskId(),
-                activityLog.type(),
-                activityLog.notes(),
-                activityLog.gpsLat(),
-                activityLog.gpsLng(),
-                activityLog.startTime(),
-                activityLog.endTime(),
-                activityLog.batchId(),
-                activityLog.quantity(),
-                activityLog.unitPrice(),
-                activityLog.totalPrice(),
-                activityLog.customerName(),
-                activityLog.customerPhone(),
-                activityLog.customerEmail(),
-                activityLog.chemicalLotNumber(),
-                activityLog.chemicalExpirationDate(),
-                activityLog.applicationRate(),
-                activityLog.totalQuantityApplied(),
-                activityLog.weatherWindSpeed(),
-                activityLog.weatherWindDirection(),
-                activityLog.weatherTemperature(),
-                activityLog.applicatorLicense(),
-                activityLog.isManualInput(),
-                activityLog.manualInputComments(),
-                vStatus,
-                verifiedBy,
-                verifiedAt,
-                activityLog.reiEndTime()
-            );
+        ActivityLog secureLog = new ActivityLog(
+            activityLog.id(),
+            activityLog.timestamp(),
+            activityLog.userId(),
+            activityLog.locationId(),
+            activityLog.productId(),
+            activityLog.taskId(),
+            activityLog.type(),
+            activityLog.notes(),
+            activityLog.gpsLat(),
+            activityLog.gpsLng(),
+            activityLog.startTime(),
+            activityLog.endTime(),
+            activityLog.batchId(),
+            activityLog.quantity(),
+            activityLog.unitPrice(),
+            activityLog.totalPrice(),
+            activityLog.customerName(),
+            activityLog.customerPhone(),
+            activityLog.customerEmail(),
+            activityLog.chemicalLotNumber(),
+            activityLog.chemicalExpirationDate(),
+            activityLog.applicationRate(),
+            activityLog.totalQuantityApplied(),
+            activityLog.weatherWindSpeed(),
+            activityLog.weatherWindDirection(),
+            activityLog.weatherTemperature(),
+            activityLog.applicatorLicense(),
+            activityLog.isManualInput(),
+            activityLog.manualInputComments(),
+            vStatus,
+            verifiedBy,
+            verifiedAt,
+            activityLog.reiEndTime()
+        );
 
-            ActivityLog updated = activityLogService.update(secureLog);
-            return Response.ok(updated).build();
-        });
+        ActivityLog updated = activityLogService.update(secureLog);
+        return Response.ok(updated).build();
     }
 
     @GET
@@ -157,12 +158,10 @@ public class ActivityLogResource {
     @APIResponse(responseCode = "200", description = "Activity log found",
         content = @Content(schema = @Schema(implementation = ActivityLog.class)))
     @APIResponse(responseCode = "404", description = "Activity log not found")
-    public Uni<Response> getById(@PathParam("id") UUID id) {
-        return Uni.createFrom().item(() ->
-            activityLogService.getById(id)
-                .map(log -> Response.ok(log).build())
-                .orElse(Response.status(Response.Status.NOT_FOUND).build())
-        );
+    public Response getById(@PathParam("id") UUID id) {
+        return activityLogService.getById(id)
+            .map(log -> Response.ok(log).build())
+            .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @GET
@@ -170,8 +169,8 @@ public class ActivityLogResource {
     @Operation(summary = "Get activity logs by location", description = "Retrieves all activity logs for a specific farm location")
     @APIResponse(responseCode = "200", description = "List of activity logs",
         content = @Content(schema = @Schema(implementation = ActivityLog.class, type = SchemaType.ARRAY)))
-    public Uni<List<ActivityLog>> getByLocationId(@PathParam("locationId") UUID locationId) {
-        return Uni.createFrom().item(() -> activityLogService.getByLocationId(locationId));
+    public List<ActivityLog> getByLocationId(@PathParam("locationId") UUID locationId) {
+        return activityLogService.getByLocationId(locationId);
     }
 
     @GET
@@ -180,11 +179,9 @@ public class ActivityLogResource {
     @APIResponse(responseCode = "200", description = "Activity log found",
         content = @Content(schema = @Schema(implementation = ActivityLog.class)))
     @APIResponse(responseCode = "404", description = "Activity log not found")
-    public Uni<Response> getByTaskId(@PathParam("taskId") UUID taskId) {
-        return Uni.createFrom().item(() ->
-            activityLogService.getByTaskId(taskId)
-                .map(log -> Response.ok(log).build())
-                .orElse(Response.status(Response.Status.NOT_FOUND).build())
-        );
+    public Response getByTaskId(@PathParam("taskId") UUID taskId) {
+        return activityLogService.getByTaskId(taskId)
+            .map(log -> Response.ok(log).build())
+            .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 }

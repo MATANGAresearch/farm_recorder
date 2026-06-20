@@ -1,0 +1,26 @@
+# AI Coding Assistant Rules (Code Hygiene & Quality)
+
+All AI agents and coding assistants working on this project must strictly adhere to the following rules.
+
+## Code Hygiene & Style Enforcements
+1. **Unused Imports & Variables**: Never introduce unused imports or variables. Unused imports in Java and TypeScript are treated as build-failing errors.
+2. **Standard Loggers Only**: Never use `System.out.println`, `System.err.println`, or `printStackTrace()` in Java. Always use a proper SLF4J logger (e.g. `@io.quarkus.logging.Log` or JBoss Logging).
+3. **No Console Logging**: Never use `console.log` in TypeScript/React code. Use explicit error boundaries, status toasts, or custom warning/error logging if logging is required.
+4. **No Star/Wildcard Imports**: Avoid star imports (`import package.*`). Explicitly import each required class or module.
+5. **No Placeholders**: Never commit boilerplate placeholder values, dummy APIs, or `TODO` annotations without finishing the implementation.
+
+## SOLID Design Principles
+1. **Single Responsibility (SRP)**: Keep classes, services, and components focused on a single task. Avoid mixing business domain rules with REST resource or persistence layer concerns.
+2. **Open/Closed (OCP)**: Design code so that behavior can be extended without modifying the existing core files (e.g., using dependency injection and interfaces).
+3. **Liskov Substitution (LSP)**: Ensure implementing classes or mocks behave exactly as defined by their interface or port contract.
+4. **Interface Segregation (ISP)**: Create small, focused interfaces (ports) rather than bloated ones.
+5. **Dependency Inversion (DIP)**: High-level business logic must depend on abstractions (interfaces/ports). Concretions (infrastructure adapters, JPA/Panache entities) must implement those abstractions. Never inject raw Entity classes directly into services.
+
+## Build Validation
+- Always run `./mvnw clean validate` to check Java checkstyle rules before declaring a backend task complete.
+- Always run `npm run build` inside `apps/web/` to check ESLint and type compilation before declaring a web frontend task complete.
+
+## Communication & Link Formatting
+- When referencing files or code symbols (classes, methods, structs), you **MUST** format them as clickable Markdown links using the absolute `file://` scheme (e.g., `[MyClass](file:///path/to/MyClass.java)`).
+- Never use backticks around file links.
+- Keep comments explaining *why* something is done, rather than *what* is done.

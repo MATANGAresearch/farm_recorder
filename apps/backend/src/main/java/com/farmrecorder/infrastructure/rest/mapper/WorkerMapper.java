@@ -5,7 +5,7 @@ import com.farmrecorder.infrastructure.persistence.WorkerEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "cdi")
+@Mapper(componentModel = "jakarta-cdi")
 public interface WorkerMapper {
 
     @Mapping(target = "id", source = "id")

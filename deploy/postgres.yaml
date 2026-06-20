@@ -29,10 +29,10 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgis/postgis:17-3.4
+        image: postgis/postgis:18-3.6
         env:
         - name: PGDATA
-          value: /var/lib/postgresql/data/pgdata
+          value: /var/lib/postgresql/pgdata
         - name: POSTGRES_USER
           value: farmuser
         - name: POSTGRES_PASSWORD
@@ -44,7 +44,7 @@ spec:
           name: postgres
         volumeMounts:
         - name: postgres-db
-          mountPath: /var/lib/postgresql/data
+          mountPath: /var/lib/postgresql
       volumes:
       - name: postgres-db
         persistentVolumeClaim:

@@ -5,7 +5,7 @@ import com.farmrecorder.infrastructure.persistence.FarmEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "cdi")
+@Mapper(componentModel = "jakarta-cdi")
 public interface FarmMapper {
 
     @Mapping(target = "id", source = "id")

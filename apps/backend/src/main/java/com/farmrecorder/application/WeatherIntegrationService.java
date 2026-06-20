@@ -7,10 +7,13 @@ import com.farmrecorder.domain.port.WeatherGatewayPort;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import jakarta.inject.Inject;
+import org.jboss.logging.Logger;
 import java.util.UUID;
 
 @ApplicationScoped
 public class WeatherIntegrationService {
+
+    private static final Logger LOG = Logger.getLogger(WeatherIntegrationService.class);
 
     private final ManagedExecutor executor;
     private final WeatherGatewayPort weatherGateway;
@@ -74,7 +77,7 @@ public class WeatherIntegrationService {
                     }
                 });
             } catch (Exception e) {
-                System.err.println("Error backfilling weather for log " + logId + ": " + e.getMessage());
+                LOG.error("Error backfilling weather for log " + logId, e);
             }
         });
     }

@@ -3,10 +3,12 @@ package com.farmrecorder.infrastructure.rest;
 import com.farmrecorder.application.HarvestBatchService;
 import com.farmrecorder.domain.model.HarvestBatch;
 import io.smallrye.common.annotation.RunOnVirtualThread;
-import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -36,7 +38,7 @@ public class HarvestBatchResource {
     @Operation(summary = "Get available batches for a product", description = "Retrieves all harvest batches with remaining quantity > 0 for a specific product")
     @APIResponse(responseCode = "200", description = "List of available harvest batches",
         content = @Content(schema = @Schema(implementation = HarvestBatch.class, type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.ARRAY)))
-    public Uni<List<HarvestBatch>> getAvailableByProductId(@PathParam("productId") UUID productId) {
-        return Uni.createFrom().item(() -> harvestBatchService.getAvailableByProductId(productId));
+    public List<HarvestBatch> getAvailableByProductId(@PathParam("productId") UUID productId) {
+        return harvestBatchService.getAvailableByProductId(productId);
     }
 }

@@ -123,6 +123,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
           _windSpeedController.text = windSpeed.toString();
           _windDirectionController.text = windDir;
         });
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Local weather auto-fetched from GPS location.')),
         );
@@ -174,7 +175,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
     final controller = TextEditingController(text: '(01)00871234567890(17)281231(10)LOT-CHEM-999');
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Simulate Barcode Scanner'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -192,12 +193,12 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               final raw = controller.text;
               final parsed = Gs1Parser.parse(raw);
 
@@ -228,6 +229,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                     .filter()
                     .gtinEqualTo(parsed.gtin!)
                     .findFirst();
+                if (!mounted) return;
                 if (cached != null) {
                   setState(() {
                     _resolvedChemical = cached;
@@ -646,7 +648,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
+                  side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -713,9 +715,9 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer.withOpacity(0.15),
+                            color: colorScheme.primaryContainer.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: colorScheme.primary.withOpacity(0.3)),
+                            border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             children: [
@@ -751,9 +753,9 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: colorScheme.errorContainer.withOpacity(0.08),
+                            color: colorScheme.errorContainer.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: colorScheme.error.withOpacity(0.3)),
+                            border: Border.all(color: colorScheme.error.withValues(alpha: 0.3)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -962,9 +964,9 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer.withOpacity(0.2),
+                    color: colorScheme.primaryContainer.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: colorScheme.primary.withOpacity(0.3)),
+                    border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1015,7 +1017,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
+                side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -1104,17 +1106,17 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: _startTime == null
-                                ? colorScheme.outline.withOpacity(0.08)
+                                ? colorScheme.outline.withValues(alpha: 0.08)
                                 : (_endTime == null
-                                    ? colorScheme.primary.withOpacity(0.08)
-                                    : colorScheme.secondary.withOpacity(0.08)),
+                                    ? colorScheme.primary.withValues(alpha: 0.08)
+                                    : colorScheme.secondary.withValues(alpha: 0.08)),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _startTime == null
-                                  ? colorScheme.outline.withOpacity(0.2)
+                                  ? colorScheme.outline.withValues(alpha: 0.2)
                                   : (_endTime == null
-                                      ? colorScheme.primary.withOpacity(0.2)
-                                      : colorScheme.secondary.withOpacity(0.2)),
+                                      ? colorScheme.primary.withValues(alpha: 0.2)
+                                      : colorScheme.secondary.withValues(alpha: 0.2)),
                             ),
                           ),
                           child: Row(
@@ -1224,9 +1226,9 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: colorScheme.primary.withOpacity(0.2)),
+                side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.2)),
               ),
-              color: colorScheme.primaryContainer.withOpacity(0.05),
+              color: colorScheme.primaryContainer.withValues(alpha: 0.05),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -1238,7 +1240,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                         labelText: 'Applicator / Operator Override',
                         prefixIcon: Icon(Icons.person_outline),
                       ),
-                      value: _selectedOperatorId,
+                      initialValue: _selectedOperatorId,
                       hint: const Text('Default (Current worker)'),
                       items: _operators
                           .map((op) => DropdownMenuItem(
@@ -1259,7 +1261,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                       ),
                       value: _autoVerify,
                       onChanged: (value) => setState(() => _autoVerify = value),
-                      activeColor: colorScheme.primary,
+                      activeThumbColor: colorScheme.primary,
                       contentPadding: EdgeInsets.zero,
                     ),
                   ],
@@ -1314,9 +1316,9 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: colorScheme.secondaryContainer.withOpacity(0.2),
+                    color: colorScheme.secondaryContainer.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colorScheme.secondary.withOpacity(0.3)),
+                    border: Border.all(color: colorScheme.secondary.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1481,9 +1483,9 @@ class _SafetyIndicator extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgis/postgis:17-3.4
+    image: postgis/postgis:18-3.6
     container_name: farm-recorder-db
     environment:
       POSTGRES_USER: farmuser
@@ -9,7 +9,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U farmuser -d farmrecorder"]
       interval: 10s
@@ -43,7 +43,7 @@ services:
       retries: 5
 
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0.2
+    image: quay.io/keycloak/keycloak:26.6.3
     container_name: farm-recorder-keycloak
     environment:
       KEYCLOAK_ADMIN: admin
@@ -59,7 +59,7 @@ services:
       retries: 10
 
   opensearch:
-    image: opensearchproject/opensearch:2.11.0
+    image: opensearchproject/opensearch:3.7.0
     container_name: farm-recorder-opensearch
     environment:
       - discovery.type=single-node
@@ -76,7 +76,7 @@ services:
       retries: 5
 
   opensearch-dashboards:
-    image: opensearchproject/opensearch-dashboards:2.11.0
+    image: opensearchproject/opensearch-dashboards:3.7.0
     container_name: farm-recorder-dashboards
     ports:
       - "5601:5601"

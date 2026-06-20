@@ -16,7 +16,7 @@ class AuthService {
 
   Future<bool> login(String email, String password) async {
     try {
-      final url = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$_firebaseApiKey';
+      const url = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$_firebaseApiKey';
       final response = await _dio.post(url, data: {
         'email': email,
         'password': password,
@@ -38,13 +38,10 @@ class AuthService {
 
   Future<bool> signInWithGoogle() async {
     try {
-      final googleSignIn = GoogleSignIn(
-        scopes: ['email', 'profile'],
-      );
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      if (googleUser == null) return false;
+      await GoogleSignIn.instance.initialize();
+      final googleUser = await GoogleSignIn.instance.authenticate();
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final googleAuth = googleUser.authentication;
       final String? idToken = googleAuth.idToken;
       if (idToken == null) return false;
 
@@ -76,7 +73,7 @@ class AuthService {
 
   Future<bool> _exchangeSocialToken(String idToken, String providerId) async {
     try {
-      final url = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=$_firebaseApiKey';
+      const url = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=$_firebaseApiKey';
       final response = await _dio.post(url, data: {
         'postBody': 'id_token=$idToken&providerId=$providerId',
         'requestUri': 'http://localhost',

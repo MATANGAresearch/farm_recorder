@@ -2,12 +2,17 @@ package com.farmrecorder.infrastructure.rest;
 
 import com.farmrecorder.application.LocationService;
 import com.farmrecorder.domain.model.Location;
-import io.quarkus.security.Authenticated;
 import io.smallrye.common.annotation.RunOnVirtualThread;
-import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -39,19 +44,17 @@ public class LocationResource {
     @Operation(summary = "Create a new farm location", description = "Registers a new field or facility with its GLN and GeoJSON boundary")
     @APIResponse(responseCode = "201", description = "Location created successfully",
         content = @Content(schema = @Schema(implementation = Location.class)))
-    public Uni<Response> create(Location location) {
-        return Uni.createFrom().item(() -> {
-            Location created = locationService.create(location);
-            return Response.status(Response.Status.CREATED).entity(created).build();
-        });
+    public Response create(@Valid Location location) {
+        Location created = locationService.create(location);
+        return Response.status(Response.Status.CREATED).entity(created).build();
     }
 
     @GET
     @Operation(summary = "Get all locations", description = "Retrieves a list of all registered farm locations")
     @APIResponse(responseCode = "200", description = "List of locations",
         content = @Content(schema = @Schema(implementation = Location.class, type = SchemaType.ARRAY)))
-    public Uni<List<Location>> getAll() {
-        return Uni.createFrom().item(locationService::getAll);
+    public List<Location> getAll() {
+        return locationService.getAll();
     }
 
     @GET
@@ -60,22 +63,18 @@ public class LocationResource {
     @APIResponse(responseCode = "200", description = "Location found",
         content = @Content(schema = @Schema(implementation = Location.class)))
     @APIResponse(responseCode = "404", description = "Location not found")
-    public Uni<Response> getById(@PathParam("id") UUID id) {
-        return Uni.createFrom().item(() ->
-            locationService.getById(id)
+    public Response getById(@PathParam("id") UUID id) {
+        return locationService.getById(id)
                 .map(loc -> Response.ok(loc).build())
-                .orElse(Response.status(Response.Status.NOT_FOUND).build())
-        );
+                .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @DELETE
     @Path("/{id}")
     @Operation(summary = "Delete a location", description = "Removes a location from the system")
     @APIResponse(responseCode = "204", description = "Location deleted successfully")
-    public Uni<Response> delete(@PathParam("id") UUID id) {
-        return Uni.createFrom().item(() -> {
-            locationService.delete(id);
-            return Response.noContent().build();
-        });
+    public Response delete(@PathParam("id") UUID id) {
+        locationService.delete(id);
+        return Response.noContent().build();
     }
 }

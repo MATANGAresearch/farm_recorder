@@ -12,6 +12,10 @@ build/
 
 # Java/Maven
 target/
+target-cli/
+**/target-cli/
+**/checkstyle-cachefile
+**/checkstyle-result.xml
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/resources/archetype-resources/pom.xml
 class/

@@ -2,12 +2,17 @@ package com.farmrecorder.infrastructure.rest;
 
 import com.farmrecorder.application.ProductService;
 import com.farmrecorder.domain.model.Product;
-import io.quarkus.security.Authenticated;
 import io.smallrye.common.annotation.RunOnVirtualThread;
-import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -40,11 +45,9 @@ public class ProductResource {
     @APIResponse(responseCode = "201", description = "Product created successfully",
         content = @Content(schema = @Schema(implementation = Product.class)))
     @RolesAllowed("ADMIN")
-    public Uni<Response> create(Product product) {
-        return Uni.createFrom().item(() -> {
-            Product created = productService.create(product);
-            return Response.status(Response.Status.CREATED).entity(created).build();
-        });
+    public Response create(@Valid Product product) {
+        Product created = productService.create(product);
+        return Response.status(Response.Status.CREATED).entity(created).build();
     }
 
     @PUT
@@ -52,19 +55,17 @@ public class ProductResource {
     @APIResponse(responseCode = "200", description = "Product updated successfully",
         content = @Content(schema = @Schema(implementation = Product.class)))
     @RolesAllowed("ADMIN")
-    public Uni<Response> update(Product product) {
-        return Uni.createFrom().item(() -> {
-            Product updated = productService.update(product);
-            return Response.ok(updated).build();
-        });
+    public Response update(@Valid Product product) {
+        Product updated = productService.update(product);
+        return Response.ok(updated).build();
     }
 
     @GET
     @Operation(summary = "Get all products", description = "Retrieves a list of all registered products")
     @APIResponse(responseCode = "200", description = "List of products",
         content = @Content(schema = @Schema(implementation = Product.class, type = SchemaType.ARRAY)))
-    public Uni<List<Product>> getAll() {
-        return Uni.createFrom().item(productService::getAll);
+    public List<Product> getAll() {
+        return productService.getAll();
     }
 
     @GET
@@ -73,11 +74,9 @@ public class ProductResource {
     @APIResponse(responseCode = "200", description = "Product found",
         content = @Content(schema = @Schema(implementation = Product.class)))
     @APIResponse(responseCode = "404", description = "Product not found")
-    public Uni<Response> getById(@PathParam("id") UUID id) {
-        return Uni.createFrom().item(() ->
-            productService.getById(id)
+    public Response getById(@PathParam("id") UUID id) {
+        return productService.getById(id)
                 .map(p -> Response.ok(p).build())
-                .orElse(Response.status(Response.Status.NOT_FOUND).build())
-        );
+                .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 }

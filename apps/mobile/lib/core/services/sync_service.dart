@@ -14,7 +14,7 @@ class SyncService {
 
   Future<void> syncPendingLogs() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) return;
+    if (connectivityResult.contains(ConnectivityResult.none)) return;
 
     final pendingLogs = await AppDatabase.isar.offlineActivityLogs
         .filter()
