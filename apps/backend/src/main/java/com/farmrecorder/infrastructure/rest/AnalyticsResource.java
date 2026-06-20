@@ -70,10 +70,13 @@ public class AnalyticsResource {
                 builder.query(q -> q.matchAll(m -> m));
             }
 
-            SearchResponse<Map> response = openSearchClient.search(builder.build(), Map.class);
+            @SuppressWarnings("unchecked")
+            SearchResponse<Map<String, Object>> response = (SearchResponse<Map<String, Object>>) (SearchResponse<?>)
+                    openSearchClient.search(builder.build(), Map.class);
             
-            List<Map> results = response.hits().hits().stream()
-                    .map(hit -> hit.source())
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> results = response.hits().hits().stream()
+                    .map(hit -> (Map<String, Object>) hit.source())
                     .toList();
 
             long total = 0;
