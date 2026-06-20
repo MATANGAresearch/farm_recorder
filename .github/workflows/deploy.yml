@@ -33,24 +33,6 @@ jobs:
         chmod +x mvnw
         ./mvnw dependency:resolve
 
-    - name: Run Trivy Vulnerability Scanner (CVE Check)
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        ignore-unfixed: true
-        format: 'table'
-        exit-code: '0'
-        severity: 'CRITICAL,HIGH'
-
-    - name: Azure Login
-      uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - name: ACR Login
-      run: |
-        az acr login --name lumaacr
-
     - name: Check for Outdated Maven Dependencies
       run: |
         cd apps/backend
@@ -68,6 +50,24 @@ jobs:
         cd apps/web
         npm install
         npm run build
+
+    - name: Run Trivy Vulnerability Scanner (CVE Check)
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        ignore-unfixed: true
+        format: 'table'
+        exit-code: '0'
+        severity: 'CRITICAL,HIGH'
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: ACR Login
+      run: |
+        az acr login --name lumaacr
 
     - name: Build & Push Backend Container
       run: |
