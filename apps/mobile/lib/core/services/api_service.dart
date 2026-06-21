@@ -114,4 +114,19 @@ class ApiService {
     final response = await _dio.get('/tasks/farm/$farmId');
     return List<Map<String, dynamic>>.from(response.data);
   }
+
+  Future<Map<String, dynamic>> createFarm(Map<String, dynamic> payload) async {
+    final response = await _dio.post('/farms', data: payload);
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> createLocation(Map<String, dynamic> payload) async {
+    final response = await _dio.post('/locations', data: payload);
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> createProduct(Map<String, dynamic> payload) async {
+    final response = await _dio.post('/products', data: payload);
+    return response.data;
+  }
 }

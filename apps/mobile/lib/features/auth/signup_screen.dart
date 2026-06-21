@@ -1,34 +1,60 @@
 import 'package:flutter/material.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/api_service.dart';
 
-class LoginScreen extends StatefulWidget {
+class SignupScreen extends StatefulWidget {
   final AuthService authService;
-  final VoidCallback onLoginSuccess;
-  final VoidCallback onNavigateToSignup;
+  final ApiService apiService;
+  final VoidCallback onSignupSuccess;
+  final VoidCallback onNavigateToLogin;
 
-  const LoginScreen({
+  const SignupScreen({
     super.key,
     required this.authService,
-    required this.onLoginSuccess,
-    required this.onNavigateToSignup,
+    required this.apiService,
+    required this.onSignupSuccess,
+    required this.onNavigateToLogin,
   });
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignupScreenState extends State<SignupScreen> {
+  final _farmNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
   String? _error;
 
-  Future<void> _handleEmailLogin() async {
+  @override
+  void dispose() {
+    _farmNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSignup() async {
+    final farmName = _farmNameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
 
-    if (email.isEmpty || password.isEmpty) {
+    if (farmName.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       setState(() => _error = 'Please fill in all fields.');
+      return;
+    }
+
+    if (password != confirmPassword) {
+      setState(() => _error = 'Passwords do not match.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setState(() => _error = 'Password must be at least 6 characters.');
       return;
     }
 
@@ -37,53 +63,28 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
 
-    final success = await widget.authService.login(email, password);
+    // 1. Sign up the user in Firebase Auth
+    final signUpSuccess = await widget.authService.signUp(email, password);
     if (!mounted) return;
 
-    if (success) {
-      widget.onLoginSuccess();
-    } else {
+    if (!signUpSuccess) {
       setState(() {
         _isLoading = false;
-        _error = 'Invalid email or password.';
+        _error = 'Failed to create user account.';
       });
+      return;
     }
-  }
 
-  Future<void> _handleGoogleLogin() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    final success = await widget.authService.signInWithGoogle();
-    if (!mounted) return;
-
-    if (success) {
-      widget.onLoginSuccess();
-    } else {
+    // 2. Initialize their Farm on the Backend
+    try {
+      await widget.apiService.createFarm({'name': farmName});
+      if (mounted) {
+        widget.onSignupSuccess();
+      }
+    } catch (e) {
       setState(() {
         _isLoading = false;
-        _error = 'Google Sign-In failed.';
-      });
-    }
-  }
-
-  Future<void> _handleAppleLogin() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    final success = await widget.authService.signInWithApple();
-    if (!mounted) return;
-
-    if (success) {
-      widget.onLoginSuccess();
-    } else {
-      setState(() {
-        _isLoading = false;
-        _error = 'Apple Sign-In failed.';
+        _error = 'Account created, but failed to initialize farm: $e';
       });
     }
   }
@@ -105,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const Icon(Icons.agriculture_rounded, size: 80, color: Colors.green),
               const SizedBox(height: 16),
               Text(
-                'Farm Recorder',
+                'Join Farm Recorder',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
@@ -114,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'GAP Traceability & Task Management',
+                'Create account & register farm portal',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -140,6 +141,17 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
 
               TextField(
+                controller: _farmNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Farm Name',
+                  prefixIcon: Icon(Icons.business_outlined),
+                  border: OutlineInputBorder(),
+                ),
+                enabled: !_isLoading,
+              ),
+              const SizedBox(height: 16),
+
+              TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
@@ -161,10 +173,22 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 enabled: !_isLoading,
               ),
+              const SizedBox(height: 16),
+
+              TextField(
+                controller: _confirmPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm Password',
+                  prefixIcon: Icon(Icons.lock_reset_outlined),
+                  border: OutlineInputBorder(),
+                ),
+                enabled: !_isLoading,
+              ),
               const SizedBox(height: 24),
 
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleEmailLogin,
+                onPressed: _isLoading ? null : _handleSignup,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
@@ -179,60 +203,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text('Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
+                    : const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 24),
 
-              Row(
-                children: [
-                  const Expanded(child: Divider()),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('or continue with', style: theme.textTheme.bodySmall),
-                  ),
-                  const Expanded(child: Divider()),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              OutlinedButton.icon(
-                onPressed: _isLoading ? null : _handleGoogleLogin,
-                icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
-                label: const Text('Sign In with Google'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              OutlinedButton.icon(
-                onPressed: _isLoading ? null : _handleAppleLogin,
-                icon: const Icon(Icons.apple),
-                label: const Text('Sign In with Apple'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Don't have an account? ",
+                    'Already have an account? ',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                   GestureDetector(
-                    onTap: _isLoading ? null : widget.onNavigateToSignup,
+                    onTap: _isLoading ? null : widget.onNavigateToLogin,
                     child: const Text(
-                      'Sign Up',
+                      'Sign In',
                       style: TextStyle(
                         color: Colors.green,
                         fontWeight: FontWeight.bold,

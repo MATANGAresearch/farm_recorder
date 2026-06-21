@@ -8,6 +8,8 @@ import 'core/theme/app_theme.dart';
 import 'features/activity/record_activity_screen.dart';
 import 'features/tasks/my_tasks_screen.dart';
 import 'features/auth/login_screen.dart';
+import 'features/auth/signup_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Top-level service instances for simple dependency injection
 late final ApiService apiService;
@@ -43,6 +45,7 @@ class _FarmRecorderAppState extends State<FarmRecorderApp> {
   int _currentIndex = 0;
   bool _isAuthenticated = false;
   bool _checkingAuth = true;
+  bool _showSignup = false;
 
   late List<Widget> _screens;
 
@@ -77,6 +80,15 @@ class _FarmRecorderAppState extends State<FarmRecorderApp> {
   void _handleLoginSuccess() {
     setState(() {
       _isAuthenticated = true;
+      _showSignup = false;
+      _initScreens();
+    });
+  }
+
+  void _handleSignupSuccess() {
+    setState(() {
+      _isAuthenticated = true;
+      _showSignup = false;
       _initScreens();
     });
   }
@@ -86,6 +98,7 @@ class _FarmRecorderAppState extends State<FarmRecorderApp> {
     setState(() {
       _isAuthenticated = false;
       _currentIndex = 0;
+      _showSignup = false;
     });
   }
 
@@ -111,10 +124,18 @@ class _FarmRecorderAppState extends State<FarmRecorderApp> {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
-        home: LoginScreen(
-          authService: authService,
-          onLoginSuccess: _handleLoginSuccess,
-        ),
+        home: _showSignup
+            ? SignupScreen(
+                authService: authService,
+                apiService: apiService,
+                onSignupSuccess: _handleSignupSuccess,
+                onNavigateToLogin: () => setState(() => _showSignup = false),
+              )
+            : LoginScreen(
+                authService: authService,
+                onLoginSuccess: _handleLoginSuccess,
+                onNavigateToSignup: () => setState(() => _showSignup = true),
+              ),
       );
     }
 

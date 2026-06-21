@@ -8,6 +8,9 @@ import '../../core/services/media_service.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/cached_chemical.dart';
 import '../../core/db/cached_input_batch.dart';
+import 'create_location_dialog.dart';
+import 'create_product_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/utils/gs1_parser.dart';
 
 class RecordActivityScreen extends StatefulWidget {
@@ -425,7 +428,9 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
       );
 
       if (_capturedMedia != null) {
-        final mediaUrl = await _mediaService.uploadMediaToMinIO(_capturedMedia!, _selectedMediaType, 'farm-123', 'task-456', widget.apiService);
+        final prefs = await SharedPreferences.getInstance();
+        final farmId = prefs.getString('active_farm_id') ?? 'farm-123';
+        final mediaUrl = await _mediaService.uploadMediaToMinIO(_capturedMedia!, _selectedMediaType, farmId, 'task-none', widget.apiService);
         if (mediaUrl != null) {
           await widget.syncService.queueMedia(
             activityLogUuid: activityUuid,
@@ -558,24 +563,47 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
           children: [
             const _SectionHeader(title: 'Basic Information', icon: Icons.info_outline),
             const SizedBox(height: 20),
-            DropdownButtonFormField<String>(
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Location / Plot *',
-                prefixIcon: Icon(Icons.location_on_outlined),
-              ),
-              initialValue: _selectedLocationId,
-              items: _locations
-                  .map((loc) => DropdownMenuItem(
-                        value: loc['id'] as String,
-                        child: Text(
-                          '${loc['name']} (${loc['gln']})',
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ))
-                  .toList(),
-              onChanged: (value) => setState(() => _selectedLocationId = value),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Location / Plot *',
+                      prefixIcon: Icon(Icons.location_on_outlined),
+                    ),
+                    value: _selectedLocationId,
+                    items: _locations
+                        .map((loc) => DropdownMenuItem(
+                              value: loc['id'] as String,
+                              child: Text(
+                                '${loc['name']} (${loc['gln']})',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ))
+                        .toList(),
+                    onChanged: (value) => setState(() => _selectedLocationId = value),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline, color: Colors.green),
+                  onPressed: () async {
+                    final result = await showDialog(
+                      context: context,
+                      builder: (context) => CreateLocationDialog(apiService: widget.apiService),
+                    );
+                    if (result != null) {
+                      final updatedLocations = await widget.apiService.getLocations();
+                      setState(() {
+                        _locations = updatedLocations;
+                        _selectedLocationId = result['id'] as String;
+                      });
+                    }
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 20),
             DropdownButtonFormField<String>(
@@ -608,34 +636,57 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
             
             if (requiresProduct) ...[
               const SizedBox(height: 20),
-              DropdownButtonFormField<String>(
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Crop / Product *',
-                  prefixIcon: Icon(Icons.eco_outlined),
-                ),
-                initialValue: _selectedProductId,
-                hint: const Text(
-                  'Select the crop being managed',
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-                items: _products
-                    .map((prod) => DropdownMenuItem(
-                          value: prod['id'] as String,
-                          child: Text(
-                            prod['name'],
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedProductId = value;
-                    if (_selectedType == 'DIRECT_SALE') _loadBatches();
-                  });
-                },
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Crop / Product *',
+                        prefixIcon: Icon(Icons.eco_outlined),
+                      ),
+                      value: _selectedProductId,
+                      hint: const Text(
+                        'Select the crop being managed',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                      items: _products
+                          .map((prod) => DropdownMenuItem(
+                                value: prod['id'] as String,
+                                child: Text(
+                                  prod['name'],
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedProductId = value;
+                          if (_selectedType == 'DIRECT_SALE') _loadBatches();
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline, color: Colors.green),
+                    onPressed: () async {
+                      final result = await showDialog(
+                        context: context,
+                        builder: (context) => CreateProductDialog(apiService: widget.apiService),
+                      );
+                      if (result != null) {
+                        final updatedProducts = await widget.apiService.getProducts();
+                        setState(() {
+                          _products = updatedProducts;
+                          _selectedProductId = result['id'] as String;
+                        });
+                      }
+                    },
+                  ),
+                ],
               ),
             ],
 

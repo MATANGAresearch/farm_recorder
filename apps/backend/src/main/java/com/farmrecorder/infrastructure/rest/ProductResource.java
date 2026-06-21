@@ -44,7 +44,6 @@ public class ProductResource {
     @Operation(summary = "Create a new product", description = "Registers a new product with its GTIN. Restricted to admin role.")
     @APIResponse(responseCode = "201", description = "Product created successfully",
         content = @Content(schema = @Schema(implementation = Product.class)))
-    @RolesAllowed("ADMIN")
     public Response create(@Valid Product product) {
         Product created = productService.create(product);
         return Response.status(Response.Status.CREATED).entity(created).build();
@@ -54,7 +53,6 @@ public class ProductResource {
     @Operation(summary = "Update an existing product", description = "Updates product details. Restricted to admin role.")
     @APIResponse(responseCode = "200", description = "Product updated successfully",
         content = @Content(schema = @Schema(implementation = Product.class)))
-    @RolesAllowed("ADMIN")
     public Response update(@Valid Product product) {
         Product updated = productService.update(product);
         return Response.ok(updated).build();

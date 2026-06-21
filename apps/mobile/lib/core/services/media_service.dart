@@ -109,9 +109,11 @@ class MediaService {
       final originalUri = Uri.parse(uploadUrl);
       final originalHost = originalUri.authority; // e.g. "localhost:9000" or "127.0.0.1:9000"
 
-      if (Platform.isAndroid) {
-        uploadUrl = uploadUrl.replaceAll('localhost:9000', '10.0.2.2:9000')
-                             .replaceAll('127.0.0.1:9000', '10.0.2.2:9000');
+      if (originalUri.host == 'localhost' || originalUri.host == '127.0.0.1') {
+        if (Platform.isAndroid) {
+          uploadUrl = uploadUrl.replaceAll('localhost:9000', '10.0.2.2:9000')
+                               .replaceAll('127.0.0.1:9000', '10.0.2.2:9000');
+        }
       }
       print('DEBUG: Uploading file to MinIO using URL: $uploadUrl, Host header: $originalHost');
 
@@ -130,7 +132,11 @@ class MediaService {
       // 3. Construct final accessible URL
       final uri = Uri.parse(uploadUrl);
       final objectKey = uri.path.substring(1); // Remove leading '/'
-      return 'http://10.0.2.2:9000/$objectKey'; // Use emulator IP for MinIO access from Android
+      if (originalUri.host == 'localhost' || originalUri.host == '127.0.0.1') {
+        return 'http://10.0.2.2:9000/$objectKey'; // Use emulator IP for MinIO access from Android
+      } else {
+        return '${originalUri.scheme}://${originalUri.authority}/$objectKey';
+      }
     } catch (e) {
       print('Error uploading media to MinIO: $e');
       return null;

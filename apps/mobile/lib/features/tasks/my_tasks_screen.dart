@@ -5,6 +5,7 @@ import '../../core/services/api_service.dart';
 import '../../core/services/sync_service.dart';
 import '../../core/services/media_service.dart';
 import '../../main.dart'; // To access authService
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MyTasksScreen extends StatefulWidget {
   final ApiService apiService;
@@ -81,7 +82,14 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
       final farms = await widget.apiService.getFarms();
       _farms = farms;
       if (_farms.isNotEmpty) {
-        _selectedFarm = _farms.first;
+        final prefs = await SharedPreferences.getInstance();
+        final savedFarmId = prefs.getString('active_farm_id');
+        if (savedFarmId != null && _farms.any((f) => f['id'] == savedFarmId)) {
+          _selectedFarm = _farms.firstWhere((f) => f['id'] == savedFarmId);
+        } else {
+          _selectedFarm = _farms.first;
+          await prefs.setString('active_farm_id', _selectedFarm!['id'] as String);
+        }
       }
       
       await _loadTasksAndDetails();
@@ -368,14 +376,32 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
 
     if (_isLoading && _farms.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('My Daily Tasks')),
+        appBar: AppBar(
+          title: const Text('My Daily Tasks'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: widget.onLogout,
+              tooltip: 'Sign Out',
+            ),
+          ],
+        ),
         body: const Center(child: CircularProgressIndicator(color: Colors.green)),
       );
     }
 
     if (_error != null && _farms.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('My Daily Tasks')),
+        appBar: AppBar(
+          title: const Text('My Daily Tasks'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: widget.onLogout,
+              tooltip: 'Sign Out',
+            ),
+          ],
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -482,12 +508,14 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
                 if (_farms.isNotEmpty)
                   DropdownButton<Map<String, dynamic>>(
                     value: _selectedFarm,
-                    onChanged: (farm) {
+                    onChanged: (farm) async {
                       if (farm != null) {
                         setState(() {
                           _selectedFarm = farm;
                           _isLoading = true;
                         });
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setString('active_farm_id', farm['id'] as String);
                         _loadTasksAndDetails();
                       }
                     },
