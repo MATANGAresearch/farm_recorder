@@ -35,6 +35,8 @@ spec:
           value: single-node
         - name: plugins.security.disabled
           value: "true"
+        - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+          value: "FarmRecorderPassword2026!"
         - name: OPENSEARCH_JAVA_OPTS
           value: "-Xms256m -Xmx256m"
         resources:

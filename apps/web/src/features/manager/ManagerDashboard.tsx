@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import axios from 'axios';
 import {
   useGetApiV1Products,
   usePostApiV1Products,
@@ -26,11 +27,38 @@ import { Product } from '../../api/schemas/product';
 import { InputBatch } from '../../api/schemas/inputBatch';
 import { ActivityLog } from '../../api/schemas/activityLog';
 
-const DEFAULT_FARM_ID = '019ecc19-b6be-76d9-b997-5e89f6c0e35a';
+import { useAuth } from '../../api/authContext';
+
+interface FarmWorker {
+  email: string;
+  role: string;
+}
+
+const fetchFarmWorkers = async (farmId: string): Promise<FarmWorker[]> => {
+  const response = await axios.get(`/api/v1/farms/${farmId}/workers`);
+  return response.data;
+};
+
+const assignWorkerToFarm = async ({ farmId, email, role }: { farmId: string, email: string, role: string }) => {
+  await axios.post(`/api/v1/farms/${farmId}/workers`, { email, role });
+};
+
+const unassignWorkerFromFarm = async ({ farmId, email }: { farmId: string, email: string }) => {
+  await axios.delete(`/api/v1/farms/${farmId}/workers/${email}`);
+};
+
+const updateWorkerRole = async ({ farmId, email, role }: { farmId: string, email: string, role: string }) => {
+  await axios.put(`/api/v1/farms/${farmId}/workers/${email}/role`, role);
+};
 
 export default function ManagerDashboard() {
+  const { activeFarmId, activeFarm, user } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'chemicals' | 'reviews' | 'log-activity'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'chemicals' | 'reviews' | 'log-activity' | 'members'>('inventory');
+  
+  // Farm members management state
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('WORKER');
 
   // React Query Hooks
   const { data: productsResponse, isLoading: productsLoading } = useGetApiV1Products();
@@ -39,17 +67,58 @@ export default function ManagerDashboard() {
   const { data: batchesResponse, isLoading: batchesLoading } = useGetApiV1InputBatches();
   const batches = batchesResponse?.data || [];
 
-  const { data: tasksResponse, isLoading: tasksLoading } = useGetApiV1TasksFarmFarmId(DEFAULT_FARM_ID);
+  const { data: tasksResponse, isLoading: tasksLoading } = useGetApiV1TasksFarmFarmId(activeFarmId || '');
   const tasks = tasksResponse?.data || [];
 
   const { data: locationsResponse } = useGetApiV1Locations();
   const locations = locationsResponse?.data || [];
+
+  // Fetch farm workers
+  const { data: farmWorkers = [], refetch: refetchFarmWorkers } = useQuery<FarmWorker[]>({
+    queryKey: ['farmWorkers', activeFarmId],
+    queryFn: () => fetchFarmWorkers(activeFarmId || ''),
+    enabled: !!activeFarmId,
+  });
+
+  const currentUserEmail = user?.username || '';
+  const currentUserMember = farmWorkers.find(fw => fw.email === currentUserEmail);
+  const isFarmAdmin = activeFarm?.ownerId === currentUserEmail || currentUserMember?.role === 'ADMIN';
 
   // Mutations
   const createProductMutation = usePostApiV1Products();
   const updateProductMutation = usePutApiV1Products();
   const createInputBatchMutation = usePostApiV1InputBatches();
   const createActivityLogMutation = usePostApiV1ActivityLogs();
+
+  const assignWorkerMutation = useMutation({
+    mutationFn: assignWorkerToFarm,
+    onSuccess: () => {
+      refetchFarmWorkers();
+    },
+    onError: (err: any) => {
+      alert('Failed to assign worker: ' + (err.response?.data?.error || err.message));
+    }
+  });
+
+  const updateWorkerRoleMutation = useMutation({
+    mutationFn: updateWorkerRole,
+    onSuccess: () => {
+      refetchFarmWorkers();
+    },
+    onError: (err: any) => {
+      alert('Failed to update role: ' + (err.response?.data?.error || err.message));
+    }
+  });
+
+  const unassignWorkerMutation = useMutation({
+    mutationFn: unassignWorkerFromFarm,
+    onSuccess: () => {
+      refetchFarmWorkers();
+    },
+    onError: (err: any) => {
+      alert('Failed to unassign worker: ' + (err.response?.data?.error || err.message));
+    }
+  });
 
   // Local state for forms
   const [showProductForm, setShowProductForm] = useState(false);
@@ -217,7 +286,7 @@ export default function ManagerDashboard() {
         isManualInput: false,
         verificationStatus: 'VERIFIED'
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/v1/tasks/farm/${DEFAULT_FARM_ID}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/v1/tasks/farm/${activeFarmId}`] });
     } catch (err) {
       alert('Failed to record activity log: ' + err);
     }
@@ -259,6 +328,12 @@ export default function ManagerDashboard() {
             className={`tab-btn ${activeTab === 'log-activity' ? 'active' : ''}`}
           >
             📝 Log Activity
+          </button>
+          <button
+            onClick={() => setActiveTab('members')}
+            className={`tab-btn ${activeTab === 'members' ? 'active' : ''}`}
+          >
+            👥 Farm Members
           </button>
         </div>
       </div>
@@ -974,11 +1049,131 @@ export default function ManagerDashboard() {
                   <TaskReviewCard
                     key={task.id}
                     task={task}
-                    onRefresh={() => queryClient.invalidateQueries({ queryKey: [`/api/v1/tasks/farm/${DEFAULT_FARM_ID}`] })}
+                    onRefresh={() => queryClient.invalidateQueries({ queryKey: [`/api/v1/tasks/farm/${activeFarmId}`] })}
                   />
                 ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* TABS 5: Farm Members Management */}
+      {activeTab === 'members' && (
+        <div style={{ display: 'grid', gridTemplateColumns: isFarmAdmin ? '1fr 2fr' : '1fr', gap: '30px' }}>
+          {isFarmAdmin && (
+            <div className="glass-card">
+              <h3>Invite Member</h3>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (!inviteEmail.trim() || !activeFarmId) return;
+                await assignWorkerMutation.mutateAsync({ farmId: activeFarmId, email: inviteEmail, role: inviteRole });
+                setInviteEmail('');
+              }} style={{ marginTop: '20px' }}>
+                <div className="form-group">
+                  <label className="form-label">Email Address</label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    placeholder="e.g. member@domain.com"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Role</label>
+                  <select
+                    className="form-control"
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value)}
+                  >
+                    <option value="WORKER">Worker</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="READONLY">Read-Only</option>
+                  </select>
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={assignWorkerMutation.isPending}>
+                  {assignWorkerMutation.isPending ? 'Inviting...' : 'Invite to Farm'}
+                </button>
+              </form>
+            </div>
+          )}
+
+          <div className="glass-card">
+            <h3>Farm Members List</h3>
+            <div style={{ marginTop: '20px' }}>
+              <div className="table-wrapper">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Email / Username</th>
+                      <th>Role</th>
+                      {isFarmAdmin && <th style={{ textAlign: 'right' }}>Actions</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {farmWorkers.length === 0 ? (
+                      <tr>
+                        <td colSpan={isFarmAdmin ? 3 : 2} style={{ textAlign: 'center', color: '#64748b' }}>
+                          No members registered.
+                        </td>
+                      </tr>
+                    ) : (
+                      farmWorkers.map((fw) => {
+                        const isOwner = activeFarm?.ownerId === fw.email;
+                        return (
+                          <tr key={fw.email}>
+                            <td>
+                              <strong>{fw.email}</strong>
+                              {isOwner && <span className="badge badge-info" style={{ marginLeft: '10px' }}>Owner</span>}
+                            </td>
+                            <td>
+                              {isFarmAdmin && !isOwner ? (
+                                <select
+                                  value={fw.role}
+                                  onChange={(e) => {
+                                    updateWorkerRoleMutation.mutate({ farmId: activeFarmId || '', email: fw.email, role: e.target.value });
+                                  }}
+                                  className="form-control"
+                                  style={{ padding: '4px 8px', fontSize: '13px', width: 'fit-content' }}
+                                >
+                                  <option value="WORKER">WORKER</option>
+                                  <option value="ADMIN">ADMIN</option>
+                                  <option value="READONLY">READONLY</option>
+                                </select>
+                              ) : (
+                                <span className={`badge ${fw.role === 'ADMIN' ? 'badge-danger' : fw.role === 'READONLY' ? 'badge-success' : 'badge-info'}`}>
+                                  {fw.role}
+                                </span>
+                              )}
+                            </td>
+                            {isFarmAdmin && (
+                              <td style={{ textAlign: 'right' }}>
+                                {!isOwner && (
+                                  <button
+                                    onClick={() => {
+                                      if (window.confirm(`Remove ${fw.email} from this farm?`)) {
+                                        unassignWorkerMutation.mutate({ farmId: activeFarmId || '', email: fw.email });
+                                      }
+                                    }}
+                                    className="btn btn-danger"
+                                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                                    disabled={unassignWorkerMutation.isPending}
+                                  >
+                                    Remove
+                                  </button>
+                                )}
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

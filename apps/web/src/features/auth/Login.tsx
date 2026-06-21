@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../api/authContext';
 
-const Login: React.FC = () => {
+interface LoginProps {
+  onNavigateToSignup: () => void;
+}
+
+const Login: React.FC<LoginProps> = ({ onNavigateToSignup }) => {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -69,7 +73,24 @@ const Login: React.FC = () => {
         </form>
 
         <div className="login-footer">
-          <p>User registration is managed via Firebase Console or Administrator invitations.</p>
+          <p>
+            Don't have an account?{' '}
+            <button
+              type="button"
+              onClick={onNavigateToSignup}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#3b82f6',
+                cursor: 'pointer',
+                padding: 0,
+                textDecoration: 'underline',
+                font: 'inherit'
+              }}
+            >
+              Sign Up
+            </button>
+          </p>
         </div>
       </div>
     </div>

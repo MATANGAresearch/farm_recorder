@@ -38,7 +38,7 @@ spec:
         - name: FARMRECORDER_FIREBASE_PROJECT_ID
           value: farm-recorder-saas
         - name: FARMRECORDER_FIREBASE_CREDENTIALS_JSON
-          value: ""
+          value: "none"
         - name: QUARKUS_OPENSEARCH_HOSTS
           value: http://opensearch-service:9200
         ports:

@@ -29,22 +29,32 @@ const deleteWorker = async (id: string): Promise<void> => {
   await axios.delete(`/api/v1/workers/${id}`);
 };
 
-const fetchFarmWorkers = async (farmId: string): Promise<string[]> => {
+interface FarmWorker {
+  email: string;
+  role: string;
+}
+
+const fetchFarmWorkers = async (farmId: string): Promise<FarmWorker[]> => {
   const response = await axios.get(`/api/v1/farms/${farmId}/workers`);
   return response.data;
 };
 
-const assignWorkerToFarm = async ({ farmId, email }: { farmId: string, email: string }) => {
-  await axios.post(`/api/v1/farms/${farmId}/workers/${email}`);
+const assignWorkerToFarm = async ({ farmId, email, role }: { farmId: string, email: string, role: string }) => {
+  await axios.post(`/api/v1/farms/${farmId}/workers`, { email, role });
 };
 
 const unassignWorkerFromFarm = async ({ farmId, email }: { farmId: string, email: string }) => {
   await axios.delete(`/api/v1/farms/${farmId}/workers/${email}`);
 };
 
+const updateWorkerRole = async ({ farmId, email, role }: { farmId: string, email: string, role: string }) => {
+  await axios.put(`/api/v1/farms/${farmId}/workers/${email}/role`, role);
+};
+
 const promoteWorkerToAdmin = async (email: string) => {
   await axios.post(`/api/v1/workers/${email}/promote`);
 };
+
 
 const AdminPanel: React.FC = () => {
   const queryClient = useQueryClient();
@@ -126,7 +136,7 @@ const AdminPanel: React.FC = () => {
   // Farm worker state and mutations
   const [selectedFarmId, setSelectedFarmId] = useState<string>('');
 
-  const { data: assignedWorkers = [], refetch: refetchAssignedWorkers } = useQuery<string[]>({
+  const { data: assignedWorkers = [], refetch: refetchAssignedWorkers } = useQuery<FarmWorker[]>({
     queryKey: ['farmWorkers', selectedFarmId],
     queryFn: () => fetchFarmWorkers(selectedFarmId),
     enabled: !!selectedFarmId,
@@ -134,6 +144,13 @@ const AdminPanel: React.FC = () => {
 
   const assignWorkerMutation = useMutation({
     mutationFn: assignWorkerToFarm,
+    onSuccess: () => {
+      refetchAssignedWorkers();
+    },
+  });
+
+  const updateWorkerRoleMutation = useMutation({
+    mutationFn: updateWorkerRole,
     onSuccess: () => {
       refetchAssignedWorkers();
     },
@@ -345,7 +362,7 @@ const AdminPanel: React.FC = () => {
                 </div>
                 {selectedFarmId && (
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', flex: 1 }}>
-                    <div className="form-group" style={{ margin: 0, flex: 1 }}>
+                    <div className="form-group" style={{ margin: 0, flex: 2 }}>
                       <label className="form-label">Assign Worker</label>
                       <select
                         className="form-control"
@@ -357,18 +374,32 @@ const AdminPanel: React.FC = () => {
                         ))}
                       </select>
                     </div>
+                    <div className="form-group" style={{ margin: 0, flex: 1 }}>
+                      <label className="form-label">Role</label>
+                      <select
+                        className="form-control"
+                        id="worker-role-select"
+                        defaultValue="WORKER"
+                      >
+                        <option value="WORKER">Worker</option>
+                        <option value="ADMIN">Admin</option>
+                        <option value="READONLY">Read-Only</option>
+                      </select>
+                    </div>
                     <button
                       onClick={() => {
                         const select = document.getElementById('worker-assign-select') as HTMLSelectElement;
+                        const roleSelect = document.getElementById('worker-role-select') as HTMLSelectElement;
                         const email = select?.value;
+                        const role = roleSelect?.value || 'WORKER';
                         if (email) {
-                          assignWorkerMutation.mutate({ farmId: selectedFarmId, email });
+                          assignWorkerMutation.mutate({ farmId: selectedFarmId, email, role });
                         }
                       }}
                       className="btn btn-primary"
                       disabled={assignWorkerMutation.isPending}
                     >
-                      Assign Worker
+                      Assign
                     </button>
                   </div>
                 )}
@@ -382,25 +413,40 @@ const AdminPanel: React.FC = () => {
                       <thead>
                         <tr>
                           <th>Worker Email</th>
+                          <th>Role</th>
                           <th style={{ width: '100px', textAlign: 'right' }}>Action</th>
                         </tr>
                       </thead>
                       <tbody>
                         {assignedWorkers.length === 0 ? (
                           <tr>
-                            <td colSpan={2} style={{ textAlign: 'center', color: '#64748b' }}>
+                            <td colSpan={3} style={{ textAlign: 'center', color: '#64748b' }}>
                               No workers assigned to this farm yet.
                             </td>
                           </tr>
                         ) : (
-                          assignedWorkers.map((email) => (
-                            <tr key={email}>
-                              <td>{email}</td>
+                          assignedWorkers.map((fw) => (
+                            <tr key={fw.email}>
+                              <td>{fw.email}</td>
+                              <td>
+                                <select
+                                  value={fw.role}
+                                  onChange={(e) => {
+                                    updateWorkerRoleMutation.mutate({ farmId: selectedFarmId, email: fw.email, role: e.target.value });
+                                  }}
+                                  className="form-control"
+                                  style={{ padding: '4px 8px', fontSize: '13px', width: 'fit-content' }}
+                                >
+                                  <option value="WORKER">WORKER</option>
+                                  <option value="ADMIN">ADMIN</option>
+                                  <option value="READONLY">READONLY</option>
+                                </select>
+                              </td>
                               <td style={{ textAlign: 'right' }}>
                                 <button
                                   onClick={() => {
-                                    if (window.confirm(`Unassign ${email}?`)) {
-                                      unassignWorkerMutation.mutate({ farmId: selectedFarmId, email });
+                                    if (window.confirm(`Unassign ${fw.email}?`)) {
+                                      unassignWorkerMutation.mutate({ farmId: selectedFarmId, email: fw.email });
                                     }
                                   }}
                                   className="btn btn-danger"

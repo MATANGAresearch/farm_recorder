@@ -283,5 +283,13 @@
         </createTable>
         <addPrimaryKey tableName="farm_workers" columnNames="farm_id,worker_email" constraintName="pk_farm_workers"/>
     </changeSet>
+    
+    <changeSet id="16" author="farmrecorder">
+        <addColumn tableName="farm_workers">
+            <column name="role" type="varchar(50)" defaultValue="WORKER">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>

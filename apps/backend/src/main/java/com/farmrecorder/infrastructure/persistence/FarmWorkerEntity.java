@@ -23,11 +23,21 @@ public class FarmWorkerEntity extends PanacheEntityBase {
     @Column(name = "worker_email", nullable = false)
     public String workerEmail;
 
+    @Column(name = "role", nullable = false)
+    public String role;
+
     public FarmWorkerEntity() {}
 
     public FarmWorkerEntity(UUID farmId, String workerEmail) {
         this.farmId = farmId;
         this.workerEmail = workerEmail;
+        this.role = "WORKER";
+    }
+
+    public FarmWorkerEntity(UUID farmId, String workerEmail, String role) {
+        this.farmId = farmId;
+        this.workerEmail = workerEmail;
+        this.role = role;
     }
 
     public static class FarmWorkerId implements Serializable {
