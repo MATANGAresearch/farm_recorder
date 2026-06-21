@@ -16,15 +16,21 @@ import '../../core/utils/gs1_parser.dart';
 class RecordActivityScreen extends StatefulWidget {
   final ApiService apiService;
   final SyncService syncService;
+  final MediaService? mediaService;
 
-  const RecordActivityScreen({super.key, required this.apiService, required this.syncService});
+  const RecordActivityScreen({
+    super.key,
+    required this.apiService,
+    required this.syncService,
+    this.mediaService,
+  });
 
   @override
   State<RecordActivityScreen> createState() => _RecordActivityScreenState();
 }
 
 class _RecordActivityScreenState extends State<RecordActivityScreen> {
-  final _mediaService = MediaService();
+  late final MediaService _mediaService;
   final _notesController = TextEditingController();
   final _quantityController = TextEditingController();
   final _unitPriceController = TextEditingController();
@@ -78,6 +84,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
   @override
   void initState() {
     super.initState();
+    _mediaService = widget.mediaService ?? MediaService();
     _loadInitialData();
   }
 

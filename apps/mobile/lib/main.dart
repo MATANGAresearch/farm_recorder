@@ -12,9 +12,9 @@ import 'features/auth/signup_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Top-level service instances for simple dependency injection
-late final ApiService apiService;
-late final SyncService syncService;
-late final AuthService authService;
+late ApiService apiService;
+late SyncService syncService;
+late AuthService authService;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

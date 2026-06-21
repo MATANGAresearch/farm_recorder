@@ -11,12 +11,14 @@ class MyTasksScreen extends StatefulWidget {
   final ApiService apiService;
   final SyncService syncService;
   final VoidCallback onLogout;
+  final MediaService? mediaService;
 
   const MyTasksScreen({
     super.key,
     required this.apiService,
     required this.syncService,
     required this.onLogout,
+    this.mediaService,
   });
 
   @override
@@ -39,8 +41,8 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
   final bool _useMock = true;
 
   final ImagePicker _picker = ImagePicker();
-  final MediaService _mediaService = MediaService();
-  
+  late final MediaService _mediaService;
+
   final Map<String, File?> _taskEvidence = {};
   final Map<String, String> _evidenceType = {};
 
@@ -58,6 +60,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
   @override
   void initState() {
     super.initState();
+    _mediaService = widget.mediaService ?? MediaService();
     _loadInitialData();
   }
 
@@ -147,7 +150,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
         final tempDir = Directory.systemTemp;
         final extension = type == 'IMAGE' ? 'jpg' : 'mp4';
         final dummyFile = File('${tempDir.path}/mock_${type.toLowerCase()}_$taskId.$extension');
-        await dummyFile.writeAsBytes(List.generate(100, (index) => index));
+        dummyFile.writeAsBytesSync(List.generate(100, (index) => index));
         mediaFile = dummyFile;
       } else if (type == 'IMAGE') {
         final photo = await _picker.pickImage(source: ImageSource.camera);
